@@ -1,0 +1,72 @@
+/* src/components/ThankYou.css */
+.thank-you-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem;
+  max-width: 600px;
+  margin: auto;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.checkmark-circle {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.checkmark-circle .background {
+  width: 100px;
+  height: 100px;
+  background-color: #4caf50;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: scaleIn 0.4s ease-out;
+}
+
+.checkmark-circle .checkmark {
+  width: 30px;
+  height: 50px;
+  border-radius: 5px;
+  border-style: solid;
+  border-color: white;
+  border-width: 0 5px 5px 0;
+  position: absolute;
+  top: 20px;
+  left: 35px;
+  transform: rotate(45deg);
+  animation: drawCheckmark 0.6s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@keyframes drawCheckmark {
+  0% { height: 0; width: 0; opacity: 1; }
+  40% { height: 0; width: 30px; opacity: 1; }
+  100% { height: 50px; width: 30px; opacity: 1; }
+}
+
+.thank-you-container h2 {
+  color: #4caf50;
+  margin: 0;
+}
+
+.thank-you-container p {
+  color: #b0b0b0;
+  font-size: 1.1rem;
+}
