@@ -1,18 +1,24 @@
-// src/components/ThankYou.jsx
+// src/components/feedback/form-components/ThankYouAnimation.jsx
 import React from 'react';
-import './ThankYou.css'; // Relative path to the CSS file in the same folder
 
-const ThankYou = () => {
+const ThankYouAnimation = ({ onReset }) => {
   return (
     <div className="thank-you-container">
-      <div className="checkmark-circle">
-        <div className="background"></div>
-        <div className="checkmark"></div>
+      <div className="thank-you-animation">
+        <div className="checkmark-circle">
+          <div className="checkmark"></div>
+        </div>
+        <h2>Thank You for Your Feedback!</h2>
+        <p>Your response has been recorded successfully.</p>
+        <button 
+          className="btn btn-primary"
+          onClick={onReset}
+        >
+          Submit Another Feedback
+        </button>
       </div>
-      <h2>Thank You!</h2>
-      <p>Your feedback has been received.</p>
     </div>
   );
 };
 
-export default ThankYou;
+export default ThankYouAnimation;

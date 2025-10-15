@@ -1,50 +1,67 @@
 // src/App.jsx
-import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import FeedbackForm from './components/FeedbackForm';
-import Dashboard from './components/Dashboard';
-import ThemeToggle from './components/ThemeToggle';
-
-// Mock data to simulate a backend
-const initialFeedback = [
-  { id: 1, guestName: 'Alice', email: 'a@b.com', eventType: 'Conference', rating: 5, comment: 'Great event!', date: '2023-10-26T10:00:00Z' },
-  { id: 2, guestName: 'Bob', eventType: 'Wedding', rating: 4, comment: 'Beautiful venue.', date: '2023-10-25T14:30:00Z' },
-];
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import Header from './components/layout/Header'
+import FeedbackForm from './components/feedback/FeedbackForm'
+import ThankYou from './components/feedback/ThankYou'
+import AdminLogin from './components/admin/AdminLogin'
+import Dashboard from './components/admin/Dashboard'
 
 function App() {
-  const [feedback, setFeedback] = useState(initialFeedback);
-  const [currentView, setCurrentView] = useState('guest'); // 'guest' or 'admin'
-  const [theme, setTheme] = useState('light');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Theme management logic
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    // Check if user is logged in on initial render
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+    setIsLoading(false);
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+  const login = (token) => {
+    localStorage.setItem('adminToken', token);
+    setIsAuthenticated(true);
   };
 
-  // Function to handle new feedback submission
-  const handleFeedbackSubmit = (newFeedback) => {
-    const feedbackWithId = { ...newFeedback, id: Date.now() };
-    setFeedback(prevFeedback => [feedbackWithId, ...prevFeedback]);
+  const logout = () => {
+    localStorage.removeItem('adminToken');
+    setIsAuthenticated(false);
   };
+
+  function ProtectedRoute({ children }) {
+    return isAuthenticated ? children : <Navigate to="/admin" />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading application...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="app-container">
-      <Header currentView={currentView} setCurrentView={setCurrentView} />
-      <main className="main-content">
-        {currentView === 'guest' ? (
-          <FeedbackForm onSubmit={handleFeedbackSubmit} />
-        ) : (
-          <Dashboard feedbackData={feedback} />
-        )}
-      </main>
-      <ThemeToggle theme={theme} onToggle={toggleTheme} />
-    </div>
-  );
+    <Router>
+      <div className="app">
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/" element={<FeedbackForm />} />
+            <Route path="/thank-you" element={<ThankYou />} />
+            <Route path="/admin" element={<AdminLogin onLogin={login} />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard onLogout={logout} />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </main>
+      </div>
+    </Router>
+  )
 }
 
-export default App;
+export default App

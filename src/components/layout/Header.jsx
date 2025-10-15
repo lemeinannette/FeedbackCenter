@@ -1,28 +1,27 @@
-// src/components/Header.jsx
+// src/components/layout/Header.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
+import ThemeToggle from '../theme/ThemeToggle';
 import './Header.css';
 
-const Header = ({ currentView, setCurrentView }) => {
+const Header = () => {
   return (
     <header className="header">
-      <h1>FeedbackCenter</h1>
-      <nav>
-        <button
-          className={currentView === 'guest' ? 'active' : ''}
-          onClick={() => setCurrentView('guest')}
-        >
-          Give Feedback
-        </button>
-        <button
-          className={currentView === 'admin' ? 'active' : ''}
-          onClick={() => setCurrentView('admin')}
-        >
-          Admin Dashboard
-        </button>
-      </nav>
+      <div className="container">
+        <div className="header-content">
+          <Link to="/" className="logo">
+            <span className="logo-icon">💬</span>
+            <span className="logo-text">FeedbackCenter</span>
+          </Link>
+          <nav className="nav">
+            <Link to="/" className="nav-link">Home</Link>
+            <Link to="/admin" className="nav-link">Admin</Link>
+            <ThemeToggle />
+          </nav>
+        </div>
+      </div>
     </header>
   );
 };
 
-// THIS IS THE CRITICAL LINE
 export default Header;
