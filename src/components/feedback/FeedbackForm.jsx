@@ -210,6 +210,8 @@ const FeedbackForm = () => {
   };
 
   const renderStars = (name, rating) => {
+    const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+    
     return (
       <div className="rating-container">
         <div className="rating-stars">
@@ -223,8 +225,8 @@ const FeedbackForm = () => {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path 
                   d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" 
-                  fill={star <= rating ? "#00897b" : "none"}
-                  stroke={star <= rating ? "#00897b" : "#ddd"}
+                  fill={star <= rating ? "#FFD700" : "none"}
+                  stroke={star <= rating ? "#FFD700" : "#ddd"}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -233,12 +235,17 @@ const FeedbackForm = () => {
             </button>
           ))}
         </div>
-        <div className="rating-labels">
-          <span>Poor</span>
-          <span>Fair</span>
-          <span>Good</span>
-          <span>Very Good</span>
-          <span>Excellent</span>
+        <div className="rating-info">
+          <div className="rating-value">
+            {rating > 0 ? (
+              <>
+                <span className="rating-number">{rating}/5</span>
+                <span className="rating-text">{ratingLabels[rating]}</span>
+              </>
+            ) : (
+              <span className="rating-placeholder">Please rate</span>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -545,11 +552,10 @@ const FeedbackForm = () => {
                   <p>Your feedback helps us improve</p>
                 </div>
                 
-                <div className="form-section">
+                <div className="ratings-form">
                   <div className="rating-group">
                     <div className="rating-header">
                       <label className="rating-label">Food</label>
-                      <span className="rating-value">{formData.foodRating > 0 ? `${formData.foodRating}/5` : ''}</span>
                     </div>
                     {renderStars('foodRating', formData.foodRating)}
                     {errors.foodRating && <div className="invalid-feedback">{errors.foodRating}</div>}
@@ -558,7 +564,6 @@ const FeedbackForm = () => {
                   <div className="rating-group">
                     <div className="rating-header">
                       <label className="rating-label">Ambience</label>
-                      <span className="rating-value">{formData.ambienceRating > 0 ? `${formData.ambienceRating}/5` : ''}</span>
                     </div>
                     {renderStars('ambienceRating', formData.ambienceRating)}
                     {errors.ambienceRating && <div className="invalid-feedback">{errors.ambienceRating}</div>}
@@ -567,7 +572,6 @@ const FeedbackForm = () => {
                   <div className="rating-group">
                     <div className="rating-header">
                       <label className="rating-label">Service</label>
-                      <span className="rating-value">{formData.serviceRating > 0 ? `${formData.serviceRating}/5` : ''}</span>
                     </div>
                     {renderStars('serviceRating', formData.serviceRating)}
                     {errors.serviceRating && <div className="invalid-feedback">{errors.serviceRating}</div>}
@@ -576,7 +580,6 @@ const FeedbackForm = () => {
                   <div className="rating-group">
                     <div className="rating-header">
                       <label className="rating-label">Overall Experience</label>
-                      <span className="rating-value">{formData.overallRating > 0 ? `${formData.overallRating}/5` : ''}</span>
                     </div>
                     {renderStars('overallRating', formData.overallRating)}
                     {errors.overallRating && <div className="invalid-feedback">{errors.overallRating}</div>}
@@ -585,7 +588,6 @@ const FeedbackForm = () => {
                   <div className="rating-group">
                     <div className="rating-header">
                       <label className="rating-label">Staff Professionalism</label>
-                      <span className="rating-value">{formData.staffProfessionalismRating > 0 ? `${formData.staffProfessionalismRating}/5` : ''}</span>
                     </div>
                     {renderStars('staffProfessionalismRating', formData.staffProfessionalismRating)}
                   </div>
@@ -593,7 +595,6 @@ const FeedbackForm = () => {
                   <div className="rating-group">
                     <div className="rating-header">
                       <label className="rating-label">Facilities</label>
-                      <span className="rating-value">{formData.facilitiesRating > 0 ? `${formData.facilitiesRating}/5` : ''}</span>
                     </div>
                     {renderStars('facilitiesRating', formData.facilitiesRating)}
                   </div>
@@ -601,7 +602,6 @@ const FeedbackForm = () => {
                   <div className="rating-group">
                     <div className="rating-header">
                       <label className="rating-label">Value for Money</label>
-                      <span className="rating-value">{formData.valueForMoneyRating > 0 ? `${formData.valueForMoneyRating}/5` : ''}</span>
                     </div>
                     {renderStars('valueForMoneyRating', formData.valueForMoneyRating)}
                   </div>
