@@ -212,16 +212,34 @@ const FeedbackForm = () => {
   const renderStars = (name, rating) => {
     return (
       <div className="rating-container">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            className={`rating-star ${star <= rating ? 'active' : ''}`}
-            onClick={() => handleRatingChange(name, star)}
-          >
-            <span className="star-icon">★</span>
-          </button>
-        ))}
+        <div className="rating-stars">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              className={`rating-star ${star <= rating ? 'active' : ''}`}
+              onClick={() => handleRatingChange(name, star)}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" 
+                  fill={star <= rating ? "#00897b" : "none"}
+                  stroke={star <= rating ? "#00897b" : "#ddd"}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          ))}
+        </div>
+        <div className="rating-labels">
+          <span>Poor</span>
+          <span>Fair</span>
+          <span>Good</span>
+          <span>Very Good</span>
+          <span>Excellent</span>
+        </div>
       </div>
     );
   };
