@@ -5,8 +5,7 @@ import Header from './components/layout/Header';
 import FeedbackForm from './components/feedback/FeedbackForm';
 import ThankYou from './components/feedback/ThankYou';
 import AdminLogin from './components/admin/AdminLogin';
-// ⬇️ Replace old Dashboard import with your new FeedbackTable
-import FeedbackTable from './components/admin/FeedbackTable';
+import Dashboard from './components/admin/Dashboard'; // ✅ Correct import
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -54,8 +53,8 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  {/* ⬇️ Use FeedbackTable as the new dashboard */}
-                  <FeedbackTable onLogout={logout} />
+                  {/* ⬇️ Use Dashboard as the new dashboard */}
+                  <Dashboard onLogout={logout} />
                 </ProtectedRoute>
               }
             />
