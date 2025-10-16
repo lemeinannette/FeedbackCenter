@@ -294,7 +294,6 @@ const FeedbackForm = () => {
                 <path d="M8 15L12 9L16 11L20 7L22 15L18 19L14 17L10 21L8 15Z" fill="white"/>
                 <circle cx="15" cy="15" r="2" fill="#00897b"/>
               </svg>
-              <span className="logo-text">FeedbackHub</span>
             </div>
           </div>
           
@@ -303,8 +302,14 @@ const FeedbackForm = () => {
             <a href="#feedback" className="nav-link active">Feedback</a>
             <a href="#admin" className="nav-link">Admin</a>
           </div>
-          
-          <div className="navbar-actions">
+        </div>
+      </nav>
+      
+      <div className="feedback-form-container">
+        <div className="feedback-form-wrapper">
+          <div className="feedback-form-header">
+            <h1>Feedback Form</h1>
+            <p>Your input helps us improve our events and services</p>
             <button 
               className="theme-toggle"
               onClick={toggleTheme}
@@ -321,15 +326,6 @@ const FeedbackForm = () => {
                 </svg>
               )}
             </button>
-          </div>
-        </div>
-      </nav>
-      
-      <div className="feedback-form-container">
-        <div className="feedback-form-wrapper">
-          <div className="feedback-form-header">
-            <h1>Feedback Form</h1>
-            <p>Your input helps us improve our events and services</p>
           </div>
           
           {errors.form && (
@@ -581,10 +577,7 @@ const FeedbackForm = () => {
                   onClick={() => handleRecommendationChange(true)}
                 >
                   <div className="recommendation-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
-                      <path d="M8 14L10.5 16.5L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <span className="emoji happy">😊</span>
                   </div>
                   <span>YES</span>
                 </button>
@@ -594,10 +587,7 @@ const FeedbackForm = () => {
                   onClick={() => handleRecommendationChange(false)}
                 >
                   <div className="recommendation-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="10" fill="#F44336"/>
-                      <path d="M15 9L9 15M9 9L15 15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <span className="emoji sad">😞</span>
                   </div>
                   <span>NO</span>
                 </button>
