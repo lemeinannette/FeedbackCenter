@@ -1,5 +1,5 @@
 // src/components/feedback/FeedbackForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './FeedbackForm.css';
 
@@ -35,20 +35,43 @@ const FeedbackForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const navigate = useNavigate();
 
   const events = [
-    { id: '1', name: 'Wedding Reception', icon: '💒' },
-    { id: '2', name: 'Corporate Conference', icon: '👔' },
-    { id: '3', name: 'Graduation Ceremony', icon: '🎓' },
-    { id: '4', name: 'Birthday Party', icon: '🎂' },
-    { id: '5', name: 'Anniversary Celebration', icon: '💑' },
-    { id: '6', name: 'Business Meeting', icon: '💼' },
-    { id: '7', name: 'Product Launch', icon: '🚀' },
-    { id: '8', name: 'Charity Gala', icon: '🎗️' },
-    { id: '9', name: 'Other', icon: '📝' }
+    { id: '1', name: 'Wedding Reception' },
+    { id: '2', name: 'Corporate Conference' },
+    { id: '3', name: 'Graduation Ceremony' },
+    { id: '4', name: 'Birthday Party' },
+    { id: '5', name: 'Anniversary Celebration' },
+    { id: '6', name: 'Business Meeting' },
+    { id: '7', name: 'Product Launch' },
+    { id: '8', name: 'Charity Gala' },
+    { id: '9', name: 'Other' }
   ];
+
+  // Load theme preference from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setIsDarkTheme(true);
+      document.body.classList.add('dark-theme');
+    }
+  }, []);
+
+  // Toggle theme
+  const toggleTheme = () => {
+    const newTheme = !isDarkTheme;
+    setIsDarkTheme(newTheme);
+    
+    if (newTheme) {
+      document.body.classList.add('dark-theme');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-theme');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -206,12 +229,9 @@ const FeedbackForm = () => {
     });
     setErrors({});
     setShowThankYou(false);
-    setCurrentStep(1);
   };
 
   const renderStars = (name, rating) => {
-    const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
-    
     return (
       <div className="rating-container">
         <div className="rating-stars">
@@ -236,33 +256,10 @@ const FeedbackForm = () => {
           ))}
         </div>
         <div className="rating-info">
-          <div className="rating-value">
-            {rating > 0 ? (
-              <>
-                <span className="rating-number">{rating}/5</span>
-                <span className="rating-text">{ratingLabels[rating]}</span>
-              </>
-            ) : (
-              <span className="rating-placeholder">Please rate</span>
-            )}
-          </div>
+          <span className="rating-text">Selected: {rating}</span>
         </div>
       </div>
     );
-  };
-
-  const nextStep = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-      window.scrollTo(0, 0);
-    }
   };
 
   if (showThankYou) {
@@ -286,35 +283,53 @@ const FeedbackForm = () => {
   }
 
   return (
-    <div className="feedback-form-container">
-      <div className="container">
+    <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
+      {/* Navigation Bar */}
+      <nav className="navbar">
+        <div className="navbar-container">
+          <div className="navbar-brand">
+            <div className="logo">
+              <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="30" height="30" rx="6" fill="#00897b"/>
+                <path d="M8 15L12 9L16 11L20 7L22 15L18 19L14 17L10 21L8 15Z" fill="white"/>
+                <circle cx="15" cy="15" r="2" fill="#00897b"/>
+              </svg>
+              <span className="logo-text">FeedbackHub</span>
+            </div>
+          </div>
+          
+          <div className="navbar-menu">
+            <a href="#home" className="nav-link">Home</a>
+            <a href="#feedback" className="nav-link active">Feedback</a>
+            <a href="#admin" className="nav-link">Admin</a>
+          </div>
+          
+          <div className="navbar-actions">
+            <button 
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {isDarkTheme ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 3V1M12 23V21M4.22 4.22L2.81 2.81M21.19 21.19L19.78 19.78M1 12H3M21 12H23M4.22 19.78L2.81 21.19M19.78 4.22L21.19 2.81" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/>
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </nav>
+      
+      <div className="feedback-form-container">
         <div className="feedback-form-wrapper">
           <div className="feedback-form-header">
-            <h1>We Value Your Feedback</h1>
+            <h1>Feedback Form</h1>
             <p>Your input helps us improve our events and services</p>
-            
-            {/* Progress indicator */}
-            <div className="progress-indicator">
-              <div className="progress-step">
-                <div className={`step-number ${currentStep >= 1 ? 'active' : ''}`}>1</div>
-                <div className="step-label">Information</div>
-              </div>
-              <div className="progress-line"></div>
-              <div className="progress-step">
-                <div className={`step-number ${currentStep >= 2 ? 'active' : ''}`}>2</div>
-                <div className="step-label">Event Details</div>
-              </div>
-              <div className="progress-line"></div>
-              <div className="progress-step">
-                <div className={`step-number ${currentStep >= 3 ? 'active' : ''}`}>3</div>
-                <div className="step-label">Ratings</div>
-              </div>
-              <div className="progress-line"></div>
-              <div className="progress-step">
-                <div className={`step-number ${currentStep >= 4 ? 'active' : ''}`}>4</div>
-                <div className="step-label">Complete</div>
-              </div>
-            </div>
           </div>
           
           {errors.form && (
@@ -324,376 +339,293 @@ const FeedbackForm = () => {
           )}
           
           <form onSubmit={handleSubmit} className="feedback-form">
-            {/* Step 1: User Information */}
-            {currentStep === 1 && (
-              <div className="form-step">
-                <div className="step-header">
-                  <h2>Your Information</h2>
-                  <p>Let us know who you are</p>
-                </div>
-                
-                {/* Anonymous Toggle */}
+            {/* Anonymous Toggle */}
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.isAnonymous}
+                  onChange={() => handleToggleChange('isAnonymous')}
+                />
+                <span className="checkbox-custom"></span>
+                <span className="checkbox-text">SUBMIT AS ANONYMOUS</span>
+              </label>
+            </div>
+            
+            {/* Feedback Type */}
+            <div className="form-group">
+              <label className="form-label">ARE YOU GIVING FEEDBACK AS:</label>
+              <div className="radio-group">
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="feedbackType"
+                    value="individual"
+                    checked={formData.feedbackType === 'individual'}
+                    onChange={() => setFormData(prev => ({ ...prev, feedbackType: 'individual' }))}
+                    disabled={formData.isAnonymous}
+                  />
+                  <span className="radio-custom"></span>
+                  <span className="radio-text">Individual</span>
+                </label>
+                <label className="radio-label">
+                  <input
+                    type="radio"
+                    name="feedbackType"
+                    value="group"
+                    checked={formData.feedbackType === 'group'}
+                    onChange={() => setFormData(prev => ({ ...prev, feedbackType: 'group' }))}
+                    disabled={formData.isAnonymous}
+                  />
+                  <span className="radio-custom"></span>
+                  <span className="radio-text">GROUP / ORGANIZATION / ASSOCIATION</span>
+                </label>
+              </div>
+            </div>
+            
+            {/* Individual Information */}
+            {!formData.isAnonymous && formData.feedbackType === 'individual' && (
+              <div className="form-section">
                 <div className="form-group">
-                  <div className="toggle-container">
-                    <label className="toggle-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.isAnonymous}
-                        onChange={() => handleToggleChange('isAnonymous')}
-                      />
-                      <span className="toggle-slider"></span>
-                      <span className="toggle-text">Submit Feedback Anonymously</span>
-                    </label>
-                  </div>
+                  <label htmlFor="name" className="form-label">Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                    placeholder="Your name"
+                  />
+                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                 </div>
                 
-                {/* Feedback Type Toggle */}
-                {!formData.isAnonymous && (
-                  <div className="form-group">
-                    <label className="form-label">Feedback Type</label>
-                    <div className="toggle-buttons">
-                      <button
-                        type="button"
-                        className={`toggle-btn ${formData.feedbackType === 'individual' ? 'active' : ''}`}
-                        onClick={() => setFormData(prev => ({ ...prev, feedbackType: 'individual' }))}
-                      >
-                        <span className="icon">👤</span>
-                        <span>Individual</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`toggle-btn ${formData.feedbackType === 'group' ? 'active' : ''}`}
-                        onClick={() => setFormData(prev => ({ ...prev, feedbackType: 'group' }))}
-                      >
-                        <span className="icon">👥</span>
-                        <span>Group</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <div className="form-group">
+                  <label htmlFor="email" className="form-label">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                    placeholder="Your email"
+                  />
+                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                </div>
                 
-                {/* Individual Information */}
-                {!formData.isAnonymous && formData.feedbackType === 'individual' && (
-                  <div className="form-section">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="name" className="form-label">Your Name</label>
-                        <input
-                          type="text"
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          className={`form-control ${errors.name ? 'is-invalid' : ''}`}
-                          placeholder="John Doe"
-                        />
-                        {errors.name && <div className="invalid-feedback">{errors.name}</div>}
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="email" className="form-label">Email Address</label>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                          placeholder="john@example.com"
-                        />
-                        {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-                      </div>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="contact" className="form-label">Contact Number</label>
-                      <input
-                        type="tel"
-                        id="contact"
-                        name="contact"
-                        value={formData.contact}
-                        onChange={handleInputChange}
-                        className={`form-control ${errors.contact ? 'is-invalid' : ''}`}
-                        placeholder="+1 (555) 123-4567"
-                      />
-                      {errors.contact && <div className="invalid-feedback">{errors.contact}</div>}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Group Information */}
-                {!formData.isAnonymous && formData.feedbackType === 'group' && (
-                  <div className="form-section">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="groupName" className="form-label">Group Name</label>
-                        <input
-                          type="text"
-                          id="groupName"
-                          name="groupName"
-                          value={formData.groupName}
-                          onChange={handleInputChange}
-                          className={`form-control ${errors.groupName ? 'is-invalid' : ''}`}
-                          placeholder="ABC Corporation"
-                        />
-                        {errors.groupName && <div className="invalid-feedback">{errors.groupName}</div>}
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="groupEmail" className="form-label">Group Email</label>
-                        <input
-                          type="email"
-                          id="groupEmail"
-                          name="groupEmail"
-                          value={formData.groupEmail}
-                          onChange={handleInputChange}
-                          className={`form-control ${errors.groupEmail ? 'is-invalid' : ''}`}
-                          placeholder="contact@abc.com"
-                        />
-                        {errors.groupEmail && <div className="invalid-feedback">{errors.groupEmail}</div>}
-                      </div>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="groupContact" className="form-label">Group Contact Number</label>
-                      <input
-                        type="tel"
-                        id="groupContact"
-                        name="groupContact"
-                        value={formData.groupContact}
-                        onChange={handleInputChange}
-                        className={`form-control ${errors.groupContact ? 'is-invalid' : ''}`}
-                        placeholder="+1 (555) 123-4567"
-                      />
-                      {errors.groupContact && <div className="invalid-feedback">{errors.groupContact}</div>}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="form-navigation">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={nextStep}
-                  >
-                    Next Step
-                  </button>
+                <div className="form-group">
+                  <label htmlFor="contact" className="form-label">Contact</label>
+                  <input
+                    type="tel"
+                    id="contact"
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleInputChange}
+                    className={`form-control ${errors.contact ? 'is-invalid' : ''}`}
+                    placeholder="Your contact number"
+                  />
+                  {errors.contact && <div className="invalid-feedback">{errors.contact}</div>}
                 </div>
               </div>
             )}
             
-            {/* Step 2: Event Information */}
-            {currentStep === 2 && (
-              <div className="form-step">
-                <div className="step-header">
-                  <h2>Event Details</h2>
-                  <p>Tell us about the event you attended</p>
+            {/* Group Information */}
+            {!formData.isAnonymous && formData.feedbackType === 'group' && (
+              <div className="form-section">
+                <div className="form-group">
+                  <label htmlFor="groupName" className="form-label">Group Name</label>
+                  <input
+                    type="text"
+                    id="groupName"
+                    name="groupName"
+                    value={formData.groupName}
+                    onChange={handleInputChange}
+                    className={`form-control ${errors.groupName ? 'is-invalid' : ''}`}
+                    placeholder="Group name"
+                  />
+                  {errors.groupName && <div className="invalid-feedback">{errors.groupName}</div>}
                 </div>
                 
-                <div className="form-section">
-                  <div className="form-group">
-                    <label htmlFor="event" className="form-label">Select Event</label>
-                    <div className="event-options">
-                      {events.map(event => (
-                        <div
-                          key={event.id}
-                          className={`event-option ${formData.event === event.id ? 'selected' : ''}`}
-                          onClick={() => handleInputChange({ target: { name: 'event', value: event.id } })}
-                        >
-                          <span className="event-icon">{event.icon}</span>
-                          <span className="event-name">{event.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {errors.event && <div className="invalid-feedback">{errors.event}</div>}
-                  </div>
-                  
-                  {formData.event === '9' && (
-                    <div className="form-group">
-                      <label htmlFor="otherEvent" className="form-label">Please specify the event type</label>
-                      <textarea
-                        id="otherEvent"
-                        name="otherEvent"
-                        value={formData.otherEvent}
-                        onChange={handleInputChange}
-                        className={`form-control ${errors.otherEvent ? 'is-invalid' : ''}`}
-                        rows="3"
-                        placeholder="Please describe your event..."
-                      ></textarea>
-                      {errors.otherEvent && <div className="invalid-feedback">{errors.otherEvent}</div>}
-                    </div>
-                  )}
+                <div className="form-group">
+                  <label htmlFor="groupEmail" className="form-label">Group Email</label>
+                  <input
+                    type="email"
+                    id="groupEmail"
+                    name="groupEmail"
+                    value={formData.groupEmail}
+                    onChange={handleInputChange}
+                    className={`form-control ${errors.groupEmail ? 'is-invalid' : ''}`}
+                    placeholder="Group email"
+                  />
+                  {errors.groupEmail && <div className="invalid-feedback">{errors.groupEmail}</div>}
                 </div>
                 
-                <div className="form-navigation">
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={prevStep}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={nextStep}
-                  >
-                    Next Step
-                  </button>
+                <div className="form-group">
+                  <label htmlFor="groupContact" className="form-label">Group Contact</label>
+                  <input
+                    type="tel"
+                    id="groupContact"
+                    name="groupContact"
+                    value={formData.groupContact}
+                    onChange={handleInputChange}
+                    className={`form-control ${errors.groupContact ? 'is-invalid' : ''}`}
+                    placeholder="Group contact number"
+                  />
+                  {errors.groupContact && <div className="invalid-feedback">{errors.groupContact}</div>}
                 </div>
               </div>
             )}
             
-            {/* Step 3: Ratings */}
-            {currentStep === 3 && (
-              <div className="form-step">
-                <div className="step-header">
-                  <h2>Rate Your Experience</h2>
-                  <p>Your feedback helps us improve</p>
-                </div>
-                
-                <div className="ratings-form">
-                  <div className="rating-group">
-                    <div className="rating-header">
-                      <label className="rating-label">Food</label>
-                    </div>
-                    {renderStars('foodRating', formData.foodRating)}
-                    {errors.foodRating && <div className="invalid-feedback">{errors.foodRating}</div>}
-                  </div>
-                  
-                  <div className="rating-group">
-                    <div className="rating-header">
-                      <label className="rating-label">Ambience</label>
-                    </div>
-                    {renderStars('ambienceRating', formData.ambienceRating)}
-                    {errors.ambienceRating && <div className="invalid-feedback">{errors.ambienceRating}</div>}
-                  </div>
-                  
-                  <div className="rating-group">
-                    <div className="rating-header">
-                      <label className="rating-label">Service</label>
-                    </div>
-                    {renderStars('serviceRating', formData.serviceRating)}
-                    {errors.serviceRating && <div className="invalid-feedback">{errors.serviceRating}</div>}
-                  </div>
-                  
-                  <div className="rating-group">
-                    <div className="rating-header">
-                      <label className="rating-label">Overall Experience</label>
-                    </div>
-                    {renderStars('overallRating', formData.overallRating)}
-                    {errors.overallRating && <div className="invalid-feedback">{errors.overallRating}</div>}
-                  </div>
-                  
-                  <div className="rating-group">
-                    <div className="rating-header">
-                      <label className="rating-label">Staff Professionalism</label>
-                    </div>
-                    {renderStars('staffProfessionalismRating', formData.staffProfessionalismRating)}
-                  </div>
-                  
-                  <div className="rating-group">
-                    <div className="rating-header">
-                      <label className="rating-label">Facilities</label>
-                    </div>
-                    {renderStars('facilitiesRating', formData.facilitiesRating)}
-                  </div>
-                  
-                  <div className="rating-group">
-                    <div className="rating-header">
-                      <label className="rating-label">Value for Money</label>
-                    </div>
-                    {renderStars('valueForMoneyRating', formData.valueForMoneyRating)}
-                  </div>
-                </div>
-                
-                <div className="form-navigation">
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={prevStep}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={nextStep}
-                  >
-                    Next Step
-                  </button>
-                </div>
+            {/* Event Information */}
+            <div className="form-group">
+              <label htmlFor="event" className="form-label">Event Information</label>
+              <select
+                id="event"
+                name="event"
+                value={formData.event}
+                onChange={handleInputChange}
+                className={`form-control ${errors.event ? 'is-invalid' : ''}`}
+              >
+                <option value="">Select an event</option>
+                {events.map(event => (
+                  <option key={event.id} value={event.id}>
+                    {event.name}
+                  </option>
+                ))}
+              </select>
+              {errors.event && <div className="invalid-feedback">{errors.event}</div>}
+            </div>
+            
+            {formData.event === '9' && (
+              <div className="form-group">
+                <label htmlFor="otherEvent" className="form-label">Please specify the event type</label>
+                <textarea
+                  id="otherEvent"
+                  name="otherEvent"
+                  value={formData.otherEvent}
+                  onChange={handleInputChange}
+                  className={`form-control ${errors.otherEvent ? 'is-invalid' : ''}`}
+                  rows="3"
+                  placeholder="Please describe your event..."
+                ></textarea>
+                {errors.otherEvent && <div className="invalid-feedback">{errors.otherEvent}</div>}
               </div>
             )}
             
-            {/* Step 4: Recommendation and Comments */}
-            {currentStep === 4 && (
-              <div className="form-step">
-                <div className="step-header">
-                  <h2>Final Thoughts</h2>
-                  <p>Would you recommend us and any additional feedback</p>
+            {/* Ratings */}
+            <div className="ratings-section">
+              <h3>Your Ratings</h3>
+              
+              <div className="rating-group">
+                <div className="rating-header">
+                  <label className="rating-label">Food</label>
                 </div>
-                
-                {/* Recommendation */}
-                <div className="form-section">
-                  <div className="form-group">
-                    <label className="form-label">Would you recommend us?</label>
-                    <div className="recommendation-options">
-                      <button
-                        type="button"
-                        className={`recommendation-btn ${formData.wouldRecommend === true ? 'active yes' : ''}`}
-                        onClick={() => handleRecommendationChange(true)}
-                      >
-                        <span className="emoji">😊</span>
-                        <span>Yes</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`recommendation-btn ${formData.wouldRecommend === false ? 'active no' : ''}`}
-                        onClick={() => handleRecommendationChange(false)}
-                      >
-                        <span className="emoji">😞</span>
-                        <span>No</span>
-                      </button>
-                    </div>
-                    {errors.wouldRecommend && <div className="invalid-feedback">{errors.wouldRecommend}</div>}
-                  </div>
-                </div>
-                
-                {/* Additional Comments */}
-                <div className="form-section">
-                  <div className="form-group">
-                    <label htmlFor="comments" className="form-label">Additional Comments</label>
-                    <textarea
-                      id="comments"
-                      name="comments"
-                      value={formData.comments}
-                      onChange={handleInputChange}
-                      className="form-control"
-                      rows="5"
-                      placeholder="Tell us about your experience..."
-                    ></textarea>
-                  </div>
-                </div>
-                
-                <div className="form-navigation">
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={prevStep}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-                  </button>
-                </div>
+                {renderStars('foodRating', formData.foodRating)}
+                {errors.foodRating && <div className="invalid-feedback">{errors.foodRating}</div>}
               </div>
-            )}
+              
+              <div className="rating-group">
+                <div className="rating-header">
+                  <label className="rating-label">Ambience</label>
+                </div>
+                {renderStars('ambienceRating', formData.ambienceRating)}
+                {errors.ambienceRating && <div className="invalid-feedback">{errors.ambienceRating}</div>}
+              </div>
+              
+              <div className="rating-group">
+                <div className="rating-header">
+                  <label className="rating-label">Service</label>
+                </div>
+                {renderStars('serviceRating', formData.serviceRating)}
+                {errors.serviceRating && <div className="invalid-feedback">{errors.serviceRating}</div>}
+              </div>
+              
+              <div className="rating-group">
+                <div className="rating-header">
+                  <label className="rating-label">Overall Experience</label>
+                </div>
+                {renderStars('overallRating', formData.overallRating)}
+                {errors.overallRating && <div className="invalid-feedback">{errors.overallRating}</div>}
+              </div>
+              
+              <div className="rating-group">
+                <div className="rating-header">
+                  <label className="rating-label">Staff Professionalism</label>
+                </div>
+                {renderStars('staffProfessionalismRating', formData.staffProfessionalismRating)}
+              </div>
+              
+              <div className="rating-group">
+                <div className="rating-header">
+                  <label className="rating-label">Facilities</label>
+                </div>
+                {renderStars('facilitiesRating', formData.facilitiesRating)}
+              </div>
+              
+              <div className="rating-group">
+                <div className="rating-header">
+                  <label className="rating-label">Value for Money</label>
+                </div>
+                {renderStars('valueForMoneyRating', formData.valueForMoneyRating)}
+              </div>
+            </div>
+            
+            {/* Recommendation */}
+            <div className="form-group">
+              <label className="form-label">Would you recommend us?</label>
+              <div className="recommendation-options">
+                <button
+                  type="button"
+                  className={`recommendation-btn ${formData.wouldRecommend === true ? 'active yes' : ''}`}
+                  onClick={() => handleRecommendationChange(true)}
+                >
+                  <div className="recommendation-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
+                      <path d="M8 14L10.5 16.5L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <span>YES</span>
+                </button>
+                <button
+                  type="button"
+                  className={`recommendation-btn ${formData.wouldRecommend === false ? 'active no' : ''}`}
+                  onClick={() => handleRecommendationChange(false)}
+                >
+                  <div className="recommendation-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" fill="#F44336"/>
+                      <path d="M15 9L9 15M9 9L15 15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <span>NO</span>
+                </button>
+              </div>
+              {errors.wouldRecommend && <div className="invalid-feedback">{errors.wouldRecommend}</div>}
+            </div>
+            
+            {/* Additional Comments */}
+            <div className="form-group">
+              <label htmlFor="comments" className="form-label">Additional Comments</label>
+              <textarea
+                id="comments"
+                name="comments"
+                value={formData.comments}
+                onChange={handleInputChange}
+                className="form-control"
+                rows="5"
+                placeholder="Tell us about your experience..."
+              ></textarea>
+            </div>
+            
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+            </button>
           </form>
         </div>
       </div>
