@@ -1,22 +1,20 @@
 // src/App.jsx
-import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Header from './components/layout/Header'
-import FeedbackForm from './components/feedback/FeedbackForm'
-import ThankYou from './components/feedback/ThankYou'
-import AdminLogin from './components/admin/AdminLogin'
-import Dashboard from './components/admin/Dashboard'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Header from './components/layout/Header';
+import FeedbackForm from './components/feedback/FeedbackForm';
+import ThankYou from './components/feedback/ThankYou';
+import AdminLogin from './components/admin/AdminLogin';
+// ⬇️ Replace old Dashboard import with your new FeedbackTable
+import FeedbackTable from './components/admin/FeedbackTable';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on initial render
     const token = localStorage.getItem('adminToken');
-    if (token) {
-      setIsAuthenticated(true);
-    }
+    if (token) setIsAuthenticated(true);
     setIsLoading(false);
   }, []);
 
@@ -52,16 +50,20 @@ function App() {
             <Route path="/" element={<FeedbackForm />} />
             <Route path="/thank-you" element={<ThankYou />} />
             <Route path="/admin" element={<AdminLogin onLogin={login} />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard onLogout={logout} />
-              </ProtectedRoute>
-            } />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  {/* ⬇️ Use FeedbackTable as the new dashboard */}
+                  <FeedbackTable onLogout={logout} />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </main>
       </div>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
