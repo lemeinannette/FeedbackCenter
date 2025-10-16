@@ -284,22 +284,22 @@ const FeedbackForm = () => {
 
   return (
     <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
-      {/* Navigation Bar */}
+      {/* Navigation Bar - Only one navbar with teal green background */}
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-brand">
             <div className="logo">
               <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="30" height="30" rx="6" fill="#00897b"/>
+                <rect width="30" height="30" rx="6" fill="#008080"/>
                 <path d="M8 15L12 9L16 11L20 7L22 15L18 19L14 17L10 21L8 15Z" fill="white"/>
-                <circle cx="15" cy="15" r="2" fill="#00897b"/>
+                <circle cx="15" cy="15" r="2" fill="#008080"/>
               </svg>
+              <span className="logo-text">FeedbackCenter</span>
             </div>
           </div>
           
           <div className="navbar-menu">
             <a href="#home" className="nav-link">Home</a>
-            <a href="#feedback" className="nav-link active">Feedback</a>
             <a href="#admin" className="nav-link">Admin</a>
           </div>
         </div>
