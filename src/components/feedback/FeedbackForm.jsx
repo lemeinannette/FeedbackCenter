@@ -18,14 +18,11 @@ const FeedbackForm = () => {
     // Event information
     event: '',
     otherEvent: '',
-    // Ratings
+    // Ratings - Only the required ones
     foodRating: 0,
     ambienceRating: 0,
     serviceRating: 0,
     overallRating: 0,
-    staffProfessionalismRating: 0,
-    facilitiesRating: 0,
-    valueForMoneyRating: 0,
     // Recommendation
     wouldRecommend: null,
     // Additional comments
@@ -221,9 +218,6 @@ const FeedbackForm = () => {
       ambienceRating: 0,
       serviceRating: 0,
       overallRating: 0,
-      staffProfessionalismRating: 0,
-      facilitiesRating: 0,
-      valueForMoneyRating: 0,
       wouldRecommend: null,
       comments: ''
     });
@@ -242,16 +236,7 @@ const FeedbackForm = () => {
               className={`rating-star ${star <= rating ? 'active' : ''}`}
               onClick={() => handleRatingChange(name, star)}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" 
-                  fill={star <= rating ? "#FFD700" : "none"}
-                  stroke={star <= rating ? "#FFD700" : "#ddd"}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {star <= rating ? '★' : '☆'}
             </button>
           ))}
         </div>
@@ -284,23 +269,16 @@ const FeedbackForm = () => {
 
   return (
     <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
-      {/* Navigation Bar - Only one navbar with teal green background */}
+      {/* Navigation Bar - Only the teal-green navbar with text only, no icons */}
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-brand">
-            <div className="logo">
-              <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="30" height="30" rx="6" fill="#008080"/>
-                <path d="M8 15L12 9L16 11L20 7L22 15L18 19L14 17L10 21L8 15Z" fill="white"/>
-                <circle cx="15" cy="15" r="2" fill="#008080"/>
-              </svg>
-              <span className="logo-text">FeedbackCenter</span>
-            </div>
+            <span className="logo-text">Feedback<span className="bold-text">Center</span></span>
           </div>
           
           <div className="navbar-menu">
-            <a href="#home" className="nav-link">Home</a>
-            <a href="#admin" className="nav-link">Admin</a>
+            <a href="#feedback" className="nav-link">Feedback</a>
+            <a href="/admin" className="nav-link">Admin</a>
           </div>
         </div>
       </nav>
@@ -309,22 +287,12 @@ const FeedbackForm = () => {
         <div className="feedback-form-wrapper">
           <div className="feedback-form-header">
             <h1>Feedback Form</h1>
-            <p>Your input helps us improve our events and services</p>
             <button 
               className="theme-toggle"
               onClick={toggleTheme}
               aria-label="Toggle theme"
             >
-              {isDarkTheme ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 3V1M12 23V21M4.22 4.22L2.81 2.81M21.19 21.19L19.78 19.78M1 12H3M21 12H23M4.22 19.78L2.81 21.19M19.78 4.22L21.19 2.81" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/>
-                </svg>
-              )}
+              {isDarkTheme ? '☀️' : '🌙'}
             </button>
           </div>
           
@@ -344,13 +312,13 @@ const FeedbackForm = () => {
                   onChange={() => handleToggleChange('isAnonymous')}
                 />
                 <span className="checkbox-custom"></span>
-                <span className="checkbox-text">SUBMIT AS ANONYMOUS</span>
+                <span className="checkbox-text">Submit as Anonymous</span>
               </label>
             </div>
             
             {/* Feedback Type */}
             <div className="form-group">
-              <label className="form-label">ARE YOU GIVING FEEDBACK AS:</label>
+              <label className="form-label">Feedback Type</label>
               <div className="radio-group">
                 <label className="radio-label">
                   <input
@@ -374,7 +342,7 @@ const FeedbackForm = () => {
                     disabled={formData.isAnonymous}
                   />
                   <span className="radio-custom"></span>
-                  <span className="radio-text">GROUP / ORGANIZATION / ASSOCIATION</span>
+                  <span className="radio-text">Group/Organization/Association</span>
                 </label>
               </div>
             </div>
@@ -483,7 +451,7 @@ const FeedbackForm = () => {
                 onChange={handleInputChange}
                 className={`form-control ${errors.event ? 'is-invalid' : ''}`}
               >
-                <option value="">Select an event</option>
+                <option value="">Select Event</option>
                 {events.map(event => (
                   <option key={event.id} value={event.id}>
                     {event.name}
@@ -509,7 +477,7 @@ const FeedbackForm = () => {
               </div>
             )}
             
-            {/* Ratings */}
+            {/* Ratings - Only the required ones */}
             <div className="ratings-section">
               <h3>Your Ratings</h3>
               
@@ -544,30 +512,9 @@ const FeedbackForm = () => {
                 {renderStars('overallRating', formData.overallRating)}
                 {errors.overallRating && <div className="invalid-feedback">{errors.overallRating}</div>}
               </div>
-              
-              <div className="rating-group">
-                <div className="rating-header">
-                  <label className="rating-label">Staff Professionalism</label>
-                </div>
-                {renderStars('staffProfessionalismRating', formData.staffProfessionalismRating)}
-              </div>
-              
-              <div className="rating-group">
-                <div className="rating-header">
-                  <label className="rating-label">Facilities</label>
-                </div>
-                {renderStars('facilitiesRating', formData.facilitiesRating)}
-              </div>
-              
-              <div className="rating-group">
-                <div className="rating-header">
-                  <label className="rating-label">Value for Money</label>
-                </div>
-                {renderStars('valueForMoneyRating', formData.valueForMoneyRating)}
-              </div>
             </div>
             
-            {/* Recommendation */}
+            {/* Recommendation - With emojis and specified colors */}
             <div className="form-group">
               <label className="form-label">Would you recommend us?</label>
               <div className="recommendation-options">
@@ -577,7 +524,7 @@ const FeedbackForm = () => {
                   onClick={() => handleRecommendationChange(true)}
                 >
                   <div className="recommendation-icon">
-                    <span className="emoji happy">😊</span>
+                    <span className="emoji happy">😀</span>
                   </div>
                   <span>YES</span>
                 </button>

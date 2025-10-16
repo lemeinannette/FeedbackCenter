@@ -1,78 +1,13 @@
-/* src/components/layout/Header.css */
 .header {
   background-color: white;
   box-shadow: var(--shadow-sm);
-  position: sticky;
+  position: fixed; /* stays always at the top */
   top: 0;
-  z-index: 100;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* ensures it appears above everything */
 }
 
 [data-theme="dark"] .header {
   background-color: #1f2937;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.logo-icon {
-  margin-right: 0.5rem;
-  font-size: 1.75rem;
-}
-
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.nav-link {
-  color: var(--text-color);
-  font-weight: 500;
-  padding: 0.5rem 0;
-  position: relative;
-}
-
-.nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background-color: var(--primary-color);
-  transition: width 0.3s ease;
-}
-
-.nav-link:hover::after {
-  width: 100%;
-}
-
-@media (max-width: 768px) {
-  .header-content {
-    padding: 0.75rem 0;
-  }
-  
-  .logo {
-    font-size: 1.25rem;
-  }
-  
-  .logo-icon {
-    font-size: 1.5rem;
-  }
-  
-  .nav {
-    gap: 1rem;
-  }
 }
