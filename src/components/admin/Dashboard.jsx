@@ -1,4 +1,7 @@
+// src/components/admin/Dashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Header from '../layout/Header';
 import './Dashboard.css';
 import {
   BarChart,
@@ -18,7 +21,7 @@ import {
   Legend,
 } from 'recharts';
 
-const Dashboard = () => {
+const Dashboard = ({ onLogout }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +33,7 @@ const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(null);
+  const navigate = useNavigate();
 
   // Load feedbacks safely from localStorage
   useEffect(() => {
@@ -88,11 +92,14 @@ const Dashboard = () => {
 
   // Logout function
   const handleLogout = () => {
-    // Clear any authentication tokens or user data
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('user');
-    // Redirect to login page
-    window.location.href = '/admin/login';
+    setShowLogoutModal(false);
+    if (onLogout) {
+      onLogout();
+    } else {
+      // Fallback logout if prop not provided
+      localStorage.removeItem('adminToken');
+      navigate('/admin');
+    }
   };
 
   // Export to PDF function

@@ -1,6 +1,8 @@
 // src/components/feedback/FeedbackForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Header from '../layout/Header';
+import EventDropdown from './EventDropdown';
 import './FeedbackForm.css';
 
 const FeedbackForm = () => {
@@ -34,18 +36,6 @@ const FeedbackForm = () => {
   const [errors, setErrors] = useState({});
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const navigate = useNavigate();
-
-  const events = [
-    { id: '1', name: 'Wedding Reception' },
-    { id: '2', name: 'Corporate Conference' },
-    { id: '3', name: 'Graduation Ceremony' },
-    { id: '4', name: 'Birthday Party' },
-    { id: '5', name: 'Anniversary Celebration' },
-    { id: '6', name: 'Business Meeting' },
-    { id: '7', name: 'Product Launch' },
-    { id: '8', name: 'Charity Gala' },
-    { id: '9', name: 'Other' }
-  ];
 
   // Load theme preference from localStorage
   useEffect(() => {
@@ -189,6 +179,23 @@ const FeedbackForm = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // Save feedback to localStorage for admin dashboard
+      const feedbackData = {
+        ...formData,
+        date: new Date().toISOString().split('T')[0],
+        rating: formData.overallRating,
+        food: formData.foodRating,
+        ambience: formData.ambienceRating,
+        service: formData.serviceRating,
+        overallExperience: formData.overallRating,
+        feedback: formData.comments
+      };
+      
+      // Get existing feedbacks or initialize empty array
+      const existingFeedbacks = JSON.parse(localStorage.getItem('feedbacks') || '[]');
+      existingFeedbacks.push(feedbackData);
+      localStorage.setItem('feedbacks', JSON.stringify(existingFeedbacks));
+      
       // In a real app, you would send the data to your backend
       console.log('Feedback submitted:', formData);
       
@@ -250,6 +257,7 @@ const FeedbackForm = () => {
   if (showThankYou) {
     return (
       <div className="thank-you-container">
+        <Header />
         <div className="thank-you-animation">
           <div className="checkmark-circle">
             <div className="checkmark"></div>
@@ -269,19 +277,8 @@ const FeedbackForm = () => {
 
   return (
     <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
-      {/* Navigation Bar - Only the teal-green navbar with text only, no icons */}
-      <nav className="navbar">
-        <div className="navbar-container">
-          <div className="navbar-brand">
-            <span className="logo-text">Feedback<span className="bold-text">Center</span></span>
-          </div>
-          
-          <div className="navbar-menu">
-            <a href="#feedback" className="nav-link">Feedback</a>
-            <a href="/admin" className="nav-link">Admin</a>
-          </div>
-        </div>
-      </nav>
+      {/* Use the single Header component */}
+      <Header />
       
       <div className="feedback-form-container">
         <div className="feedback-form-wrapper">
@@ -441,41 +438,15 @@ const FeedbackForm = () => {
               </div>
             )}
             
-            {/* Event Information */}
-            <div className="form-group">
-              <label htmlFor="event" className="form-label">Event Information</label>
-              <select
-                id="event"
-                name="event"
-                value={formData.event}
-                onChange={handleInputChange}
-                className={`form-control ${errors.event ? 'is-invalid' : ''}`}
-              >
-                <option value="">Select Event</option>
-                {events.map(event => (
-                  <option key={event.id} value={event.id}>
-                    {event.name}
-                  </option>
-                ))}
-              </select>
-              {errors.event && <div className="invalid-feedback">{errors.event}</div>}
-            </div>
-            
-            {formData.event === '9' && (
-              <div className="form-group">
-                <label htmlFor="otherEvent" className="form-label">Please specify the event type</label>
-                <textarea
-                  id="otherEvent"
-                  name="otherEvent"
-                  value={formData.otherEvent}
-                  onChange={handleInputChange}
-                  className={`form-control ${errors.otherEvent ? 'is-invalid' : ''}`}
-                  rows="3"
-                  placeholder="Please describe your event..."
-                ></textarea>
-                {errors.otherEvent && <div className="invalid-feedback">{errors.otherEvent}</div>}
-              </div>
-            )}
+            {/* Event Information - Using the new EventDropdown component */}
+            <EventDropdown
+              value={formData.event}
+              onChange={handleInputChange}
+              error={errors.event}
+              otherEventValue={formData.otherEvent}
+              onOtherEventChange={handleInputChange}
+              otherEventError={errors.otherEvent}
+            />
             
             {/* Ratings - Only the required ones */}
             <div className="ratings-section">
@@ -556,13 +527,16 @@ const FeedbackForm = () => {
               ></textarea>
             </div>
             
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-            </button>
+            {/* Centered Submit Button */}
+            <div className="form-submit-container">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+              </button>
+            </div>
           </form>
         </div>
       </div>
