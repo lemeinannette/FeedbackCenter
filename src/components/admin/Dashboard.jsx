@@ -1,6 +1,6 @@
 // src/components/admin/Dashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Header from '../layout/Header';
 import './Dashboard.css';
 import {
@@ -33,25 +33,43 @@ const Dashboard = ({ onLogout }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
 
-  // Load feedbacks safely from localStorage
+  // Check authentication on component mount
   useEffect(() => {
-    try {
-      setLoading(true);
-      const storedFeedbacks = localStorage.getItem('feedbacks');
-      if (storedFeedbacks) {
-        setFeedbacks(JSON.parse(storedFeedbacks));
+    const checkAuthentication = () => {
+      const token = localStorage.getItem('adminToken');
+      
+      // In a real app, you would validate the token with your backend
+      // For now, we'll just check if it exists
+      if (!token) {
+        // Redirect to login if no token
+        navigate('/admin');
+        return;
       }
-      const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-      setDarkMode(savedDarkMode);
-    } catch (err) {
-      console.error('Error loading data:', err);
-      setError('Failed to load feedback data.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      
+      // Set authentication as checked
+      setAuthChecked(true);
+      
+      // Load feedbacks data
+      try {
+        const storedFeedbacks = localStorage.getItem('feedbacks');
+        if (storedFeedbacks) {
+          setFeedbacks(JSON.parse(storedFeedbacks));
+        }
+        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+        setDarkMode(savedDarkMode);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load feedback data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuthentication();
+  }, [navigate]);
 
   // Dark mode toggle
   const toggleDarkMode = () => {
@@ -93,13 +111,17 @@ const Dashboard = ({ onLogout }) => {
   // Logout function
   const handleLogout = () => {
     setShowLogoutModal(false);
+    
+    // Clear authentication
+    localStorage.removeItem('adminToken');
+    
+    // Call the logout prop if provided
     if (onLogout) {
       onLogout();
-    } else {
-      // Fallback logout if prop not provided
-      localStorage.removeItem('adminToken');
-      navigate('/admin');
     }
+    
+    // Redirect to login page
+    navigate('/admin');
   };
 
   // Export to PDF function
@@ -107,21 +129,18 @@ const Dashboard = ({ onLogout }) => {
     // This would typically use a library like jsPDF or react-to-pdf
     // For now, we'll create a simple CSV export
     const csvContent = [
-      ['Date', 'Name', 'Group', 'Event', 'Rating', 'Feedback', 'Food', 'Ambience', 'Service', 'Overall', 'Staff', 'Facilities', 'Value'],
+      ['Date', 'Name', 'Group', 'Event', 'Rating', 'Feedback', 'Food', 'Ambience', 'Service', 'Overall'],
       ...filteredFeedbacks.map(f => [
         f.date || 'N/A',
-        f.name || 'N/A',
-        f.group || 'N/A',
-        f.event || 'N/A',
-        f.rating || 'N/A',
-        f.feedback || 'N/A',
-        f.food || 'N/A',
-        f.ambience || 'N/A',
-        f.service || 'N/A',
-        f.overallExperience || 'N/A',
-        f.staffProfessionalism || 'N/A',
-        f.facilities || 'N/A',
-        f.valueForMoney || 'N/A'
+        f.name || f.groupName || 'N/A',
+        f.groupName || 'N/A',
+        f.event || f.otherEvent || 'N/A',
+        f.rating || f.overallRating || 'N/A',
+        f.feedback || f.comments || 'N/A',
+        f.food || f.foodRating || 'N/A',
+        f.ambience || f.ambienceRating || 'N/A',
+        f.service || f.serviceRating || 'N/A',
+        f.overallExperience || f.overallRating || 'N/A'
       ])
     ].map(e => e.join(',')).join('\n');
 
@@ -154,11 +173,16 @@ const Dashboard = ({ onLogout }) => {
 
     let filtered = feedbacks.filter((f) => {
       const term = searchTerm.toLowerCase();
+      const name = f.name || f.groupName || '';
+      const group = f.groupName || '';
+      const event = f.event || f.otherEvent || '';
+      const feedback = f.feedback || f.comments || '';
+      
       return (
-        (f.name || '').toLowerCase().includes(term) ||
-        (f.group || '').toLowerCase().includes(term) ||
-        (f.event || '').toLowerCase().includes(term) ||
-        (f.feedback || '').toLowerCase().includes(term)
+        name.toLowerCase().includes(term) ||
+        group.toLowerCase().includes(term) ||
+        event.toLowerCase().includes(term) ||
+        feedback.toLowerCase().includes(term)
       );
     });
 
@@ -199,10 +223,10 @@ const Dashboard = ({ onLogout }) => {
 
     const totalFeedbacks = filteredFeedbacks.length;
     const averageRating = (
-      filteredFeedbacks.reduce((sum, f) => sum + (f.rating || 0), 0) / totalFeedbacks
+      filteredFeedbacks.reduce((sum, f) => sum + (f.rating || f.overallRating || 0), 0) / totalFeedbacks
     ).toFixed(1);
     
-    const recommendations = filteredFeedbacks.filter(f => f.rating >= 4).length;
+    const recommendations = filteredFeedbacks.filter(f => (f.rating || f.overallRating || 0) >= 4).length;
     const recommendationRate = ((recommendations / totalFeedbacks) * 100).toFixed(0);
     
     const today = new Date();
@@ -213,8 +237,9 @@ const Dashboard = ({ onLogout }) => {
     // Rating distribution
     const ratingCounts = [0, 0, 0, 0, 0];
     filteredFeedbacks.forEach(f => {
-      if (f.rating >= 1 && f.rating <= 5) {
-        ratingCounts[Math.floor(f.rating) - 1]++;
+      const rating = f.rating || f.overallRating || 0;
+      if (rating >= 1 && rating <= 5) {
+        ratingCounts[Math.floor(rating) - 1]++;
       }
     });
     
@@ -224,13 +249,20 @@ const Dashboard = ({ onLogout }) => {
       percentage: ((count / totalFeedbacks) * 100).toFixed(0)
     }));
 
-    // Category averages
-    const categories = ['food', 'ambience', 'service', 'overallExperience', 'staffProfessionalism', 'facilities', 'valueForMoney'];
+    // Category averages - only use the fields that are actually collected
+    const categories = ['food', 'ambience', 'service', 'overallExperience'];
     const categoryAverages = {};
     
     categories.forEach(category => {
       const validRatings = filteredFeedbacks
-        .map(f => f[category])
+        .map(f => {
+          // Handle both naming conventions
+          if (category === 'food') return f.food || f.foodRating;
+          if (category === 'ambience') return f.ambience || f.ambienceRating;
+          if (category === 'service') return f.service || f.serviceRating;
+          if (category === 'overallExperience') return f.overallExperience || f.overallRating;
+          return null;
+        })
         .filter(rating => rating !== undefined && rating !== null && !isNaN(rating));
       
       if (validRatings.length > 0) {
@@ -251,7 +283,7 @@ const Dashboard = ({ onLogout }) => {
       
       const dayFeedbacks = filteredFeedbacks.filter(f => f.date === dateStr);
       const dayRating = dayFeedbacks.length > 0
-        ? (dayFeedbacks.reduce((sum, f) => sum + (f.rating || 0), 0) / dayFeedbacks.length).toFixed(1)
+        ? (dayFeedbacks.reduce((sum, f) => sum + (f.rating || f.overallRating || 0), 0) / dayFeedbacks.length).toFixed(1)
         : 0;
       
       trendData.push({
@@ -264,7 +296,7 @@ const Dashboard = ({ onLogout }) => {
     // Event distribution
     const eventCounts = {};
     filteredFeedbacks.forEach(f => {
-      const event = f.event || 'Unknown';
+      const event = f.event || f.otherEvent || 'Unknown';
       eventCounts[event] = (eventCounts[event] || 0) + 1;
     });
     
@@ -276,8 +308,9 @@ const Dashboard = ({ onLogout }) => {
     // Sentiment analysis based on rating
     const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
     filteredFeedbacks.forEach(f => {
-      if (f.rating >= 4) sentimentCounts.positive++;
-      else if (f.rating >= 3) sentimentCounts.neutral++;
+      const rating = f.rating || f.overallRating || 0;
+      if (rating >= 4) sentimentCounts.positive++;
+      else if (rating >= 3) sentimentCounts.neutral++;
       else sentimentCounts.negative++;
     });
     
@@ -304,6 +337,16 @@ const Dashboard = ({ onLogout }) => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentFeedbacks = filteredFeedbacks.slice(indexOfFirstItem, indexOfLastItem);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Show loading state while checking authentication
+  if (!authChecked) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Verifying authentication...</p>
+      </div>
+    );
+  }
 
   // Handle loading and errors
   if (loading) {
@@ -379,15 +422,15 @@ const Dashboard = ({ onLogout }) => {
               <div className="feedback-details">
                 <div className="detail-row">
                   <span className="detail-label">Name:</span>
-                  <span className="detail-value">{selectedFeedback.name || 'N/A'}</span>
+                  <span className="detail-value">{selectedFeedback.name || selectedFeedback.groupName || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Group:</span>
-                  <span className="detail-value">{selectedFeedback.group || 'N/A'}</span>
+                  <span className="detail-value">{selectedFeedback.groupName || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Event:</span>
-                  <span className="detail-value">{selectedFeedback.event || 'N/A'}</span>
+                  <span className="detail-value">{selectedFeedback.event || selectedFeedback.otherEvent || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Date:</span>
@@ -395,39 +438,31 @@ const Dashboard = ({ onLogout }) => {
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Rating:</span>
-                  <span className="detail-value">{selectedFeedback.rating || 'N/A'}/5</span>
+                  <span className="detail-value">{selectedFeedback.rating || selectedFeedback.overallRating || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Feedback:</span>
-                  <span className="detail-value">{selectedFeedback.feedback || 'N/A'}</span>
+                  <span className="detail-value">{selectedFeedback.feedback || selectedFeedback.comments || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Food:</span>
-                  <span className="detail-value">{selectedFeedback.food || 'N/A'}/5</span>
+                  <span className="detail-value">{selectedFeedback.food || selectedFeedback.foodRating || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Ambience:</span>
-                  <span className="detail-value">{selectedFeedback.ambience || 'N/A'}/5</span>
+                  <span className="detail-value">{selectedFeedback.ambience || selectedFeedback.ambienceRating || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Service:</span>
-                  <span className="detail-value">{selectedFeedback.service || 'N/A'}/5</span>
+                  <span className="detail-value">{selectedFeedback.service || selectedFeedback.serviceRating || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Overall Experience:</span>
-                  <span className="detail-value">{selectedFeedback.overallExperience || 'N/A'}/5</span>
+                  <span className="detail-value">{selectedFeedback.overallExperience || selectedFeedback.overallRating || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Staff Professionalism:</span>
-                  <span className="detail-value">{selectedFeedback.staffProfessionalism || 'N/A'}/5</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Facilities:</span>
-                  <span className="detail-value">{selectedFeedback.facilities || 'N/A'}/5</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Value for Money:</span>
-                  <span className="detail-value">{selectedFeedback.valueForMoney || 'N/A'}/5</span>
+                  <span className="detail-label">Would Recommend:</span>
+                  <span className="detail-value">{selectedFeedback.wouldRecommend ? 'Yes' : 'No'}</span>
                 </div>
               </div>
             </div>
@@ -738,9 +773,7 @@ const Dashboard = ({ onLogout }) => {
                     <th>Ambience</th>
                     <th>Service</th>
                     <th>Overall</th>
-                    <th>Staff</th>
-                    <th>Facilities</th>
-                    <th>Value</th>
+                    <th>Recommend</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -750,20 +783,20 @@ const Dashboard = ({ onLogout }) => {
                       <td>{feedback.date || 'N/A'}</td>
                       <td>
                         <div className="name-group">
-                          <div className="name">{feedback.name || 'N/A'}</div>
-                          <div className="group">{feedback.group || 'N/A'}</div>
+                          <div className="name">{feedback.name || feedback.groupName || 'N/A'}</div>
+                          <div className="group">{feedback.groupName || 'N/A'}</div>
                         </div>
                       </td>
-                      <td>{feedback.event || 'N/A'}</td>
+                      <td>{feedback.event || feedback.otherEvent || 'N/A'}</td>
                       <td>
                         <div className="rating-container">
-                          <div className="rating-value">{feedback.rating || 'N/A'}</div>
+                          <div className="rating-value">{feedback.rating || feedback.overallRating || 'N/A'}</div>
                           <div className="rating-stars">
                             {[...Array(5)].map((_, i) => (
                               <span
                                 key={`${feedback.id || feedback.name}-star-${i}`}
                                 className={
-                                  i < Math.floor(feedback.rating || 0)
+                                  i < Math.floor(feedback.rating || feedback.overallRating || 0)
                                     ? 'star filled'
                                     : 'star'
                                 }
@@ -774,14 +807,12 @@ const Dashboard = ({ onLogout }) => {
                           </div>
                         </div>
                       </td>
-                      <td className="feedback-text">{feedback.feedback || 'N/A'}</td>
-                      <td>{feedback.food || 'N/A'}</td>
-                      <td>{feedback.ambience || 'N/A'}</td>
-                      <td>{feedback.service || 'N/A'}</td>
-                      <td>{feedback.overallExperience || 'N/A'}</td>
-                      <td>{feedback.staffProfessionalism || 'N/A'}</td>
-                      <td>{feedback.facilities || 'N/A'}</td>
-                      <td>{feedback.valueForMoney || 'N/A'}</td>
+                      <td className="feedback-text">{feedback.feedback || feedback.comments || 'N/A'}</td>
+                      <td>{feedback.food || feedback.foodRating || 'N/A'}</td>
+                      <td>{feedback.ambience || feedback.ambienceRating || 'N/A'}</td>
+                      <td>{feedback.service || feedback.serviceRating || 'N/A'}</td>
+                      <td>{feedback.overallExperience || feedback.overallRating || 'N/A'}</td>
+                      <td>{feedback.wouldRecommend ? 'Yes' : 'No'}</td>
                       <td>
                         <div className="action-menu-container">
                           <button 

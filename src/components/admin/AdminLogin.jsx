@@ -4,116 +4,141 @@ import { useNavigate } from 'react-router-dom';
 import './AdminLogin.css';
 
 const AdminLogin = ({ onLogin }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user types
-    if (error) {
-      setError('');
+  // Check if user is already logged in
+  React.useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      navigate('/dashboard');
     }
-  };
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.username || !formData.password) {
-      setError('Please enter both username and password');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+    setError('');
+    setIsLoading(true);
+
     try {
       // Simulate API call for authentication
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // In a real app, you would validate credentials with your backend
-      // For demo purposes, we'll accept any non-empty credentials
-      if (formData.username === 'admin' && formData.password === 'password') {
-        // Generate a mock token
-        const token = 'mock-jwt-token-' + Date.now();
+      // Simple authentication logic (in a real app, this would be a server call)
+      if (username === 'admin' && password === 'password') {
+        // Generate a simple token (in a real app, this would be a JWT from the server)
+        const token = 'admin-token-' + Date.now();
+        
+        // Store token based on remember me preference
+        if (rememberMe) {
+          localStorage.setItem('adminToken', token);
+          // Set expiration for 7 days
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 7);
+          localStorage.setItem('adminTokenExpiration', expirationDate.toISOString());
+        } else {
+          // Store in sessionStorage for session-only login
+          sessionStorage.setItem('adminToken', token);
+        }
+        
         onLogin(token);
         navigate('/dashboard');
       } else {
         setError('Invalid username or password');
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (err) {
       setError('An error occurred during login. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
     <div className="admin-login-container">
-      <div className="container">
-        <div className="admin-login-wrapper">
-          <div className="admin-login-header">
-            <h1>Admin Portal</h1>
-            <p>Sign in to access the dashboard</p>
+      <div className="admin-login-card">
+        <div className="admin-login-header">
+          <h1>Admin Login</h1>
+          <p>Enter your credentials to access the dashboard</p>
+        </div>
+        
+        {error && (
+          <div className="alert alert-danger">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="admin-login-form">
+          <div className="form-group">
+            <label htmlFor="username" className="form-label">Username</label>
+            <input
+              type="text"
+              id="username"
+              className="form-control"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              required
+              autoComplete="username"
+            />
           </div>
           
-          {error && (
-            <div className="alert alert-danger">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="admin-login-form">
-            <div className="form-group">
-              <label htmlFor="username" className="form-label">Username</label>
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <div className="password-input-container">
               <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="Enter your username"
-                autoComplete="username"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">Password</label>
-              <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
                 className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
+                required
                 autoComplete="current-password"
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={togglePasswordVisibility}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
             </div>
-            
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg w-100"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
-          
-          <div className="admin-login-footer">
-            <p>Demo credentials: username: admin, password: password</p>
           </div>
-        </div>
+          
+          <div className="form-group checkbox-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span className="checkbox-custom"></span>
+              <span className="checkbox-text">Remember me for 7 days</span>
+            </label>
+          </div>
+          
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+        
+       /* <div className="admin-login-footer">
+          <p>For demo purposes, use: username: <strong>admin</strong>, password: <strong>password</strong></p>
+        </div>*/
       </div>
     </div>
   );

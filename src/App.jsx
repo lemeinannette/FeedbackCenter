@@ -12,13 +12,17 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      // In a real app, you would validate the token with your backend
-      // For now, we'll just check if it exists
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    // Check for authentication token on app load
+    const checkAuth = () => {
+      const token = localStorage.getItem('adminToken');
+      // In a real app, you would also validate the token's expiration
+      if (token) {
+        setIsAuthenticated(true);
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = (token) => {
@@ -68,7 +72,7 @@ function App() {
             </>
           } />
           
-          {/* Admin login route */}
+          {/* Admin login route - redirect to dashboard if already authenticated */}
           <Route path="/admin" element={
             isAuthenticated ? 
             <Navigate to="/dashboard" replace /> : 
