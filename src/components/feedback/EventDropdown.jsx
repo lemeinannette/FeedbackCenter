@@ -1,56 +1,54 @@
 // src/components/feedback/EventDropdown.jsx
 import React from 'react';
+import './EventDropdown.css';
 
-const EventDropdown = ({ value, onChange, error, otherEventValue, onOtherEventChange, otherEventError }) => {
-  const events = [
-    { id: '1', name: 'Wedding Reception' },
-    { id: '2', name: 'Corporate Conference' },
-    { id: '3', name: 'Graduation Ceremony' },
-    { id: '4', name: 'Birthday Party' },
-    { id: '5', name: 'Anniversary Celebration' },
-    { id: '6', name: 'Business Meeting' },
-    { id: '7', name: 'Product Launch' },
-    { id: '8', name: 'Charity Gala' },
-    { id: '9', name: 'Other' }
-  ];
-
+const EventDropdown = ({ value, onChange, error, otherEventValue, onOtherEventChange, otherEventError, isDarkTheme }) => {
   return (
-    <>
-      <div className="form-group">
-        <label htmlFor="event" className="form-label">Event Information</label>
+    <div className="form-group">
+      <label htmlFor="event" className="form-label">Event Type</label>
+      <div className="select-wrapper">
         <select
           id="event"
           name="event"
           value={value}
           onChange={onChange}
-          className={`form-control ${error ? 'is-invalid' : ''}`}
+          className={`form-control ${error ? 'is-invalid' : ''} ${isDarkTheme ? 'dark-theme' : ''}`}
         >
-          <option value="">Select Event</option>
-          {events.map(event => (
-            <option key={event.id} value={event.id}>
-              {event.name}
-            </option>
-          ))}
+          <option value="">Select an event</option>
+          <option value="1">Conference</option>
+          <option value="2">Workshop</option>
+          <option value="3">Seminar</option>
+          <option value="4">Webinar</option>
+          <option value="5">Meetup</option>
+          <option value="6">Training</option>
+          <option value="7">Networking Event</option>
+          <option value="8">Product Launch</option>
+          <option value="9">Other</option>
         </select>
-        {error && <div className="invalid-feedback">{error}</div>}
+        <div className="select-arrow">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
       </div>
+      {error && <div className="invalid-feedback">{error}</div>}
       
       {value === '9' && (
-        <div className="form-group">
-          <label htmlFor="otherEvent" className="form-label">Please specify the event type</label>
-          <textarea
+        <div className="mt-3">
+          <label htmlFor="otherEvent" className="form-label">Please specify</label>
+          <input
+            type="text"
             id="otherEvent"
             name="otherEvent"
             value={otherEventValue}
             onChange={onOtherEventChange}
-            className={`form-control ${otherEventError ? 'is-invalid' : ''}`}
-            rows="3"
-            placeholder="Please describe your event..."
-          ></textarea>
+            className={`form-control ${otherEventError ? 'is-invalid' : ''} ${isDarkTheme ? 'dark-theme' : ''}`}
+            placeholder="Enter event type"
+          />
           {otherEventError && <div className="invalid-feedback">{otherEventError}</div>}
         </div>
       )}
-    </>
+    </div>
   );
 };
 

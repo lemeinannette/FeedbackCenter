@@ -1,19 +1,20 @@
-// src/components/feedback/form-components/ThankYouAnimation.jsx
+// src/components/feedback/ThankYou.jsx
 import React from 'react';
+import './ThankYou.css';
 
-const ThankYouAnimation = ({ onReset }) => {
+const ThankYou = ({ onReset }) => {
   return (
     <div className="thank-you-container">
-      <div className="thank-you-animation">
-        <div className="checkmark-circle">
-          <div className="checkmark"></div>
+      <div className="thank-you-card">
+        <div className="thank-you-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
+          </svg>
         </div>
-        <h2>Thank You for Your Feedback!</h2>
-        <p>Your response has been recorded successfully.</p>
-        <button 
-          className="btn btn-primary"
-          onClick={onReset}
-        >
+        <h1>Thank You!</h1>
+        <p>Your feedback has been submitted successfully.</p>
+        <p>We appreciate your time and input.</p>
+        <button className="btn btn-primary" onClick={onReset}>
           Submit Another Feedback
         </button>
       </div>
@@ -21,4 +22,4 @@ const ThankYouAnimation = ({ onReset }) => {
   );
 };
 
-export default ThankYouAnimation;
+export default ThankYou;
