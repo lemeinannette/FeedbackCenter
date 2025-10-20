@@ -8,7 +8,6 @@ import './FeedbackForm.css';
 
 const FeedbackForm = () => {
   const [formData, setFormData] = useState({
-    isAnonymous: false,
     feedbackType: 'individual',
     name: '',
     email: '',
@@ -29,7 +28,7 @@ const FeedbackForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(true); // Default to dark theme
   const [activeSection, setActiveSection] = useState('personal');
   const [formProgress, setFormProgress] = useState(0);
   const [submitClicked, setSubmitClicked] = useState(false);
@@ -42,7 +41,10 @@ const FeedbackForm = () => {
   // Load theme preference from localStorage specifically for the form
   useEffect(() => {
     const savedTheme = localStorage.getItem('feedbackFormTheme');
-    if (savedTheme === 'dark') {
+    if (savedTheme === 'light') {
+      setIsDarkTheme(false);
+      document.body.classList.remove('dark-theme');
+    } else {
       setIsDarkTheme(true);
       document.body.classList.add('dark-theme');
     }
@@ -70,7 +72,7 @@ const FeedbackForm = () => {
     let totalFields = 0;
     
     // Count required fields
-    if (formData.isAnonymous) {
+    if (formData.feedbackType === 'anonymous') {
       totalFields = 5; // event, ratings, recommendation
     } else if (formData.feedbackType === 'individual') {
       totalFields = 8; // name, email, contact, event, ratings, recommendation
@@ -86,16 +88,14 @@ const FeedbackForm = () => {
     if (formData.overallRating > 0) filledFields++;
     if (formData.wouldRecommend !== null) filledFields++;
     
-    if (!formData.isAnonymous) {
-      if (formData.feedbackType === 'individual') {
-        if (formData.name) filledFields++;
-        if (formData.email) filledFields++;
-        if (formData.contact) filledFields++;
-      } else {
-        if (formData.groupName) filledFields++;
-        if (formData.groupEmail) filledFields++;
-        if (formData.groupContact) filledFields++;
-      }
+    if (formData.feedbackType === 'individual') {
+      if (formData.name) filledFields++;
+      if (formData.email) filledFields++;
+      if (formData.contact) filledFields++;
+    } else if (formData.feedbackType === 'group') {
+      if (formData.groupName) filledFields++;
+      if (formData.groupEmail) filledFields++;
+      if (formData.groupContact) filledFields++;
     }
     
     setFormProgress(Math.round((filledFields / totalFields) * 100));
@@ -153,35 +153,33 @@ const FeedbackForm = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.isAnonymous) {
-      if (formData.feedbackType === 'individual') {
-        if (!formData.name.trim()) {
-          newErrors.name = 'Name is required';
-        }
-        
-        if (!formData.email.trim()) {
-          newErrors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-          newErrors.email = 'Email is invalid';
-        }
-        
-        if (!formData.contact.trim()) {
-          newErrors.contact = 'Contact number is required';
-        }
-      } else {
-        if (!formData.groupName.trim()) {
-          newErrors.groupName = 'Group name is required';
-        }
-        
-        if (!formData.groupEmail.trim()) {
-          newErrors.groupEmail = 'Group email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.groupEmail)) {
-          newErrors.groupEmail = 'Group email is invalid';
-        }
-        
-        if (!formData.groupContact.trim()) {
-          newErrors.groupContact = 'Group contact number is required';
-        }
+    if (formData.feedbackType === 'individual') {
+      if (!formData.name.trim()) {
+        newErrors.name = 'Name is required';
+      }
+      
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = 'Email is invalid';
+      }
+      
+      if (!formData.contact.trim()) {
+        newErrors.contact = 'Contact number is required';
+      }
+    } else if (formData.feedbackType === 'group') {
+      if (!formData.groupName.trim()) {
+        newErrors.groupName = 'Group name is required';
+      }
+      
+      if (!formData.groupEmail.trim()) {
+        newErrors.groupEmail = 'Group email is required';
+      } else if (!/\S+@\S+\.\S+/.test(formData.groupEmail)) {
+        newErrors.groupEmail = 'Group email is invalid';
+      }
+      
+      if (!formData.groupContact.trim()) {
+        newErrors.groupContact = 'Group contact number is required';
       }
     }
     
@@ -272,8 +270,10 @@ const FeedbackForm = () => {
         dataToSubmit.individualName = dataToSubmit.name;
         dataToSubmit.individualEmail = dataToSubmit.email;
         dataToSubmit.individualContact = dataToSubmit.contact;
-      } else {
+      } else if (dataToSubmit.feedbackType === 'group') {
         dataToSubmit.submissionType = 'GROUP / ORGANIZATION / ASSOCIATION';
+      } else {
+        dataToSubmit.submissionType = 'ANONYMOUS';
       }
       
       // Clean up the data
@@ -296,13 +296,15 @@ const FeedbackForm = () => {
       // Dispatch event to notify other components
       window.dispatchEvent(new Event('feedbackUpdated'));
       
-      // Navigate to thank you page
-      navigate('/thank-you', { state: { from: location.pathname } });
-      
-      // Only set showThankYou to true after successful submission
+      // Set states for thank you page
       setShowThankYou(true);
       setSubmissionComplete(true);
       console.log('Setting showThankYou to true, submission complete');
+      
+      // Navigate to thank you page after a short delay to ensure state is set
+      setTimeout(() => {
+        navigate('/thank-you', { state: { from: location.pathname } });
+      }, 100);
     } catch (error) {
       console.error('Error submitting feedback:', error);
       setErrors({ form: 'An error occurred while submitting your feedback. Please try again.' });
@@ -317,7 +319,6 @@ const FeedbackForm = () => {
   const handleResetForm = () => {
     console.log('Resetting form');
     setFormData({
-      isAnonymous: false,
       feedbackType: 'individual',
       name: '',
       email: '',
@@ -502,20 +503,7 @@ const FeedbackForm = () => {
                 <p>Tell us about yourself</p>
               </div>
               
-              {/* Anonymous Toggle */}
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.isAnonymous}
-                    onChange={() => handleToggleChange('isAnonymous')}
-                  />
-                  <span className="checkbox-custom"></span>
-                  <span className="checkbox-text">Submit as Anonymous</span>
-                </label>
-              </div>
-              
-              {/* Feedback Type */}
+              {/* Feedback Type - Three single radio buttons */}
               <div className="form-group">
                 <label className="form-label">Feedback Type</label>
                 <div className="radio-group">
@@ -523,10 +511,20 @@ const FeedbackForm = () => {
                     <input
                       type="radio"
                       name="feedbackType"
+                      value="anonymous"
+                      checked={formData.feedbackType === 'anonymous'}
+                      onChange={() => setFormData(prev => ({ ...prev, feedbackType: 'anonymous' }))}
+                    />
+                    <span className="radio-custom"></span>
+                    <span className="radio-text">Anonymous</span>
+                  </label>
+                  <label className="radio-label">
+                    <input
+                      type="radio"
+                      name="feedbackType"
                       value="individual"
                       checked={formData.feedbackType === 'individual'}
                       onChange={() => setFormData(prev => ({ ...prev, feedbackType: 'individual' }))}
-                      disabled={formData.isAnonymous}
                     />
                     <span className="radio-custom"></span>
                     <span className="radio-text">Individual</span>
@@ -538,7 +536,6 @@ const FeedbackForm = () => {
                       value="group"
                       checked={formData.feedbackType === 'group'}
                       onChange={() => setFormData(prev => ({ ...prev, feedbackType: 'group' }))}
-                      disabled={formData.isAnonymous}
                     />
                     <span className="radio-custom"></span>
                     <span className="radio-text">Group/Organization</span>
@@ -547,7 +544,7 @@ const FeedbackForm = () => {
               </div>
               
               {/* Individual Information */}
-              {!formData.isAnonymous && formData.feedbackType === 'individual' && (
+              {formData.feedbackType === 'individual' && (
                 <div className="form-fields">
                   <div className="form-group">
                     <label htmlFor="name" className="form-label">Name</label>
@@ -594,7 +591,7 @@ const FeedbackForm = () => {
               )}
               
               {/* Group Information */}
-              {!formData.isAnonymous && formData.feedbackType === 'group' && (
+              {formData.feedbackType === 'group' && (
                 <div className="form-fields">
                   <div className="form-group">
                     <label htmlFor="groupName" className="form-label">Group Name</label>
@@ -636,6 +633,15 @@ const FeedbackForm = () => {
                       placeholder="Group contact number"
                     />
                     {errors.groupContact && <div className="invalid-feedback">{errors.groupContact}</div>}
+                  </div>
+                </div>
+              )}
+              
+              {/* Anonymous Information - No fields needed */}
+              {formData.feedbackType === 'anonymous' && (
+                <div className="form-fields">
+                  <div className="form-group">
+                    <p className="anonymous-note">Your feedback will be submitted anonymously. No personal information will be collected.</p>
                   </div>
                 </div>
               )}

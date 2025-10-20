@@ -6,6 +6,7 @@ import FeedbackForm from './components/feedback/FeedbackForm';
 import ThankYou from './components/feedback/ThankYou';
 import AdminLogin from './components/admin/AdminLogin';
 import Dashboard from './components/admin/Dashboard';
+import './styles/theme.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
