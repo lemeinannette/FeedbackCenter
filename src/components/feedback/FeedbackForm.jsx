@@ -344,7 +344,7 @@ const FeedbackForm = () => {
     console.log('Form reset complete, showThankYou set to false');
   };
 
-  // Modern star rating component with horizontal layout
+  // Modern star rating component with gold stars
   const renderStars = (name, rating) => {
     const labelName = name === 'foodRating' ? 'Food' : 
                      name === 'ambienceRating' ? 'Ambience' : 
@@ -355,6 +355,9 @@ const FeedbackForm = () => {
       <div className="rating-item">
         <div className="rating-label">{labelName}</div>
         <div className="rating-container">
+          <div className="rating-value">
+            <span className="rating-text">{rating > 0 ? `${rating}/5` : 'Not rated'}</span>
+          </div>
           <div className="rating-stars">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -363,21 +366,9 @@ const FeedbackForm = () => {
                 className={`rating-star ${star <= rating ? 'active' : ''}`}
                 onClick={() => handleRatingChange(name, star)}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path 
-                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" 
-                    fill={star <= rating ? "currentColor" : "none"}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <span className="star-icon">⭐</span>
               </button>
             ))}
-          </div>
-          <div className="rating-value">
-            <span className="rating-text">{rating > 0 ? `${rating}/5` : 'Not rated'}</span>
           </div>
         </div>
       </div>
@@ -401,8 +392,32 @@ const FeedbackForm = () => {
       <div className={`feedback-form-container ${isDarkTheme ? 'dark-theme' : ''}`}>
         <div className="feedback-form-wrapper">
           <div className="feedback-form-header">
-            <h1>Feedback Form</h1>
-            <p className="form-subtitle">We value your feedback and strive to improve our services</p>
+            <div className="header-content">
+              <div className="header-title">
+                <h1>Feedback Form</h1>
+                <p className="form-subtitle">We value your feedback and strive to improve our services</p>
+              </div>
+              
+              <button 
+                className={`theme-toggle ${isDarkTheme ? 'dark' : 'light'}`}
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+              >
+                <div className="toggle-track"></div>
+                <div className="toggle-thumb">
+                  <div className="sun-icon"></div>
+                  <div className="moon-icon"></div>
+                </div>
+                <div className="toggle-icons">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="sun-icon-static">
+                    <path fillRule="evenodd" d="M8 1a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 1zM8 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM3.75 7.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM10.75 7.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM3.28 4.22a.75.75 0 00-1.06 1.06l1.06 1.06a.75.75 0 001.06-1.06L3.28 4.22zM12.72 4.22a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM4.22 12.72a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM12.72 12.72a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06z" clipRule="evenodd" />
+                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="moon-icon-static">
+                    <path d="M9.598 1.591a.75.75 0 01.785.175 7 7 0 11-8.967 8.967.75.75 0 01.96-.96 5.5 5.5 0 007.222-7.222z" />
+                  </svg>
+                </div>
+              </button>
+            </div>
             
             <div className="form-progress">
               <div className="progress-bar">
@@ -410,24 +425,6 @@ const FeedbackForm = () => {
               </div>
               <span className="progress-text">{formProgress}% Complete</span>
             </div>
-            
-            <button 
-              className={`theme-toggle ${isDarkTheme ? 'dark' : 'light'}`}
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              <div className="toggle-track">
-                <div className="toggle-thumb"></div>
-              </div>
-              <div className="toggle-icons">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="sun-icon">
-                  <path fillRule="evenodd" d="M8 1a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 1zM8 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM3.75 7.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM10.75 7.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM3.28 4.22a.75.75 0 00-1.06 1.06l1.06 1.06a.75.75 0 001.06-1.06L3.28 4.22zM12.72 4.22a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM4.22 12.72a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM12.72 12.72a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06z" clipRule="evenodd" />
-                </svg>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="moon-icon">
-                  <path d="M9.598 1.591a.75.75 0 01.785.175 7 7 0 11-8.967 8.967.75.75 0 01.96-.96 5.5 5.5 0 007.222-7.222z" />
-                </svg>
-              </div>
-            </button>
           </div>
           
           {errors.form && (
