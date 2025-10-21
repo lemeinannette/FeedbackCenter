@@ -19,13 +19,18 @@ import {
   Area,
   AreaChart,
   Legend,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
 } from 'recharts';
 
 const Dashboard = ({ onLogout }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [itemsPerPage] = useState(5);
+  const [itemsPerPage] = useState(10);
   const [timeFilter, setTimeFilter] = useState('all');
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -34,6 +39,9 @@ const Dashboard = ({ onLogout }) => {
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
   const navigate = useNavigate();
 
   // Check authentication on component mount
@@ -41,15 +49,11 @@ const Dashboard = ({ onLogout }) => {
     const checkAuthentication = () => {
       const token = localStorage.getItem('adminToken');
       
-      // In a real app, you would validate the token with your backend
-      // For now, we'll just check if it exists
       if (!token) {
-        // Redirect to login if no token
         navigate('/admin');
         return;
       }
       
-      // Set authentication as checked
       setAuthChecked(true);
       
       // Load feedbacks data
@@ -75,11 +79,7 @@ const Dashboard = ({ onLogout }) => {
   const toggleDarkMode = () => {
     const newDark = !darkMode;
     setDarkMode(newDark);
-    try {
-      localStorage.setItem('darkMode', newDark);
-    } catch (err) {
-      console.error('Dark mode save failed:', err);
-    }
+    localStorage.setItem('darkMode', newDark);
   };
 
   // Save to localStorage when feedbacks change
@@ -93,54 +93,33 @@ const Dashboard = ({ onLogout }) => {
     }
   }, [feedbacks]);
 
-  // Add new feedback
-  const addFeedback = (newFeedback) => {
-    const feedbackWithId = {
-      ...newFeedback,
-      id: Date.now(),
-      date: new Date().toISOString().split('T')[0],
-    };
-    setFeedbacks((prev) => [...prev, feedbackWithId]);
-  };
-
-  useEffect(() => {
-    window.addFeedback = addFeedback;
-    return () => delete window.addFeedback;
-  }, []);
-
   // Logout function
   const handleLogout = () => {
     setShowLogoutModal(false);
-    
-    // Clear authentication
     localStorage.removeItem('adminToken');
     
-    // Call the logout prop if provided
     if (onLogout) {
       onLogout();
     }
     
-    // Redirect to login page
     navigate('/admin');
   };
 
-  // Export to PDF function
-  const exportToPDF = () => {
-    // This would typically use a library like jsPDF or react-to-pdf
-    // For now, we'll create a simple CSV export
+  // Export to CSV function
+  const exportToCSV = () => {
     const csvContent = [
-      ['Date', 'Name', 'Group', 'Event', 'Rating', 'Feedback', 'Food', 'Ambience', 'Service', 'Overall'],
+      ['Date', 'Name', 'Group', 'Event', 'Food', 'Ambience', 'Service', 'Overall', 'Recommend', 'Comments'],
       ...filteredFeedbacks.map(f => [
-        f.date || 'N/A',
-        f.name || f.groupName || 'N/A',
+        f.submissionDate || f.date || 'N/A',
+        f.individualName || f.groupName || 'Anonymous',
         f.groupName || 'N/A',
-        f.event || f.otherEvent || 'N/A',
-        f.rating || f.overallRating || 'N/A',
-        f.feedback || f.comments || 'N/A',
-        f.food || f.foodRating || 'N/A',
-        f.ambience || f.ambienceRating || 'N/A',
-        f.service || f.serviceRating || 'N/A',
-        f.overallExperience || f.overallRating || 'N/A'
+        f.event || 'N/A',
+        f.food || 'N/A',
+        f.ambience || 'N/A',
+        f.service || 'N/A',
+        f.overall || 'N/A',
+        f.recommend || 'N/A',
+        f.comments || 'N/A'
       ])
     ].map(e => e.join(',')).join('\n');
 
@@ -173,19 +152,38 @@ const Dashboard = ({ onLogout }) => {
 
     let filtered = feedbacks.filter((f) => {
       const term = searchTerm.toLowerCase();
-      const name = f.name || f.groupName || '';
+      const name = f.individualName || f.groupName || '';
       const group = f.groupName || '';
-      const event = f.event || f.otherEvent || '';
-      const feedback = f.feedback || f.comments || '';
+      const event = f.event || '';
+      const comments = f.comments || '';
       
       return (
         name.toLowerCase().includes(term) ||
         group.toLowerCase().includes(term) ||
         event.toLowerCase().includes(term) ||
-        feedback.toLowerCase().includes(term)
+        comments.toLowerCase().includes(term)
       );
     });
 
+    // Apply date range filter
+    if (dateRange.start) {
+      const startDate = new Date(dateRange.start);
+      filtered = filtered.filter(f => {
+        const feedbackDate = new Date(f.submissionDate || f.date);
+        return feedbackDate >= startDate;
+      });
+    }
+
+    if (dateRange.end) {
+      const endDate = new Date(dateRange.end);
+      endDate.setHours(23, 59, 59, 999); // Include the entire end day
+      filtered = filtered.filter(f => {
+        const feedbackDate = new Date(f.submissionDate || f.date);
+        return feedbackDate <= endDate;
+      });
+    }
+
+    // Apply time filter
     if (timeFilter !== 'all') {
       const today = new Date();
       const start = new Date(today);
@@ -195,15 +193,40 @@ const Dashboard = ({ onLogout }) => {
       if (timeFilter === 'today') start.setHours(0, 0, 0, 0);
 
       filtered = filtered.filter((f) => {
-        const date = new Date(f.date);
+        const date = new Date(f.submissionDate || f.date);
         return timeFilter === 'today'
           ? date >= start && date <= today
           : date >= start;
       });
     }
 
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      if (sortBy === 'date') {
+        aValue = new Date(a.submissionDate || a.date);
+        bValue = new Date(b.submissionDate || b.date);
+      } else if (sortBy === 'overall') {
+        aValue = parseFloat(a.overall) || 0;
+        bValue = parseFloat(b.overall) || 0;
+      } else if (sortBy === 'recommend') {
+        aValue = a.recommend === 'Yes' ? 1 : 0;
+        bValue = b.recommend === 'Yes' ? 1 : 0;
+      } else {
+        aValue = a[sortBy] || '';
+        bValue = b[sortBy] || '';
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
     return filtered;
-  }, [feedbacks, searchTerm, timeFilter]);
+  }, [feedbacks, searchTerm, timeFilter, dateRange, sortBy, sortOrder]);
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -215,29 +238,36 @@ const Dashboard = ({ onLogout }) => {
         recentFeedbacks: 0,
         ratingDistribution: [],
         categoryAverages: {},
-        trendData: [],
         eventDistribution: [],
-        sentimentData: []
+        recommendationData: [],
+        submissionTypeData: []
       };
     }
 
     const totalFeedbacks = filteredFeedbacks.length;
-    const averageRating = (
-      filteredFeedbacks.reduce((sum, f) => sum + (f.rating || f.overallRating || 0), 0) / totalFeedbacks
-    ).toFixed(1);
+    const validRatings = filteredFeedbacks
+      .map(f => parseFloat(f.overall))
+      .filter(rating => !isNaN(rating));
     
-    const recommendations = filteredFeedbacks.filter(f => (f.rating || f.overallRating || 0) >= 4).length;
+    const averageRating = validRatings.length > 0
+      ? (validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length).toFixed(1)
+      : 0;
+    
+    const recommendations = filteredFeedbacks.filter(f => f.recommend === 'Yes').length;
     const recommendationRate = ((recommendations / totalFeedbacks) * 100).toFixed(0);
     
     const today = new Date();
     const weekAgo = new Date(today);
     weekAgo.setDate(today.getDate() - 7);
-    const recentFeedbacks = filteredFeedbacks.filter(f => new Date(f.date) >= weekAgo).length;
+    const recentFeedbacks = filteredFeedbacks.filter(f => {
+      const date = new Date(f.submissionDate || f.date);
+      return date >= weekAgo;
+    }).length;
 
     // Rating distribution
     const ratingCounts = [0, 0, 0, 0, 0];
     filteredFeedbacks.forEach(f => {
-      const rating = f.rating || f.overallRating || 0;
+      const rating = parseFloat(f.overall);
       if (rating >= 1 && rating <= 5) {
         ratingCounts[Math.floor(rating) - 1]++;
       }
@@ -246,57 +276,31 @@ const Dashboard = ({ onLogout }) => {
     const ratingDistribution = ratingCounts.map((count, index) => ({
       rating: `${index + 1} Star`,
       count,
-      percentage: ((count / totalFeedbacks) * 100).toFixed(0)
+      percentage: totalFeedbacks > 0 ? ((count / totalFeedbacks) * 100).toFixed(0) : 0
     }));
 
-    // Category averages - only use the fields that are actually collected
-    const categories = ['food', 'ambience', 'service', 'overallExperience'];
+    // Category averages
+    const categories = ['food', 'ambience', 'service', 'overall'];
     const categoryAverages = {};
     
     categories.forEach(category => {
       const validRatings = filteredFeedbacks
-        .map(f => {
-          // Handle both naming conventions
-          if (category === 'food') return f.food || f.foodRating;
-          if (category === 'ambience') return f.ambience || f.ambienceRating;
-          if (category === 'service') return f.service || f.serviceRating;
-          if (category === 'overallExperience') return f.overallExperience || f.overallRating;
-          return null;
-        })
-        .filter(rating => rating !== undefined && rating !== null && !isNaN(rating));
+        .map(f => parseFloat(f[category]))
+        .filter(rating => !isNaN(rating));
       
       if (validRatings.length > 0) {
         categoryAverages[category] = (
-          validRatings.reduce((sum, rating) => sum + Number(rating), 0) / validRatings.length
+          validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length
         ).toFixed(1);
       } else {
         categoryAverages[category] = 0;
       }
     });
 
-    // Trend data (last 7 days)
-    const trendData = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      
-      const dayFeedbacks = filteredFeedbacks.filter(f => f.date === dateStr);
-      const dayRating = dayFeedbacks.length > 0
-        ? (dayFeedbacks.reduce((sum, f) => sum + (f.rating || f.overallRating || 0), 0) / dayFeedbacks.length).toFixed(1)
-        : 0;
-      
-      trendData.push({
-        date: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        count: dayFeedbacks.length,
-        rating: Number(dayRating)
-      });
-    }
-
     // Event distribution
     const eventCounts = {};
     filteredFeedbacks.forEach(f => {
-      const event = f.event || f.otherEvent || 'Unknown';
+      const event = f.event || 'Unknown';
       eventCounts[event] = (eventCounts[event] || 0) + 1;
     });
     
@@ -305,19 +309,33 @@ const Dashboard = ({ onLogout }) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5); // Top 5 events
 
-    // Sentiment analysis based on rating
-    const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+    // Recommendation data
+    const wouldRecommend = filteredFeedbacks.filter(f => f.recommend === 'Yes').length;
+    const wouldNotRecommend = filteredFeedbacks.filter(f => f.recommend === 'No').length;
+    
+    const recommendationData = [
+      { name: 'Would Recommend', value: wouldRecommend, color: '#10b981' },
+      { name: 'Would Not Recommend', value: wouldNotRecommend, color: '#ef4444' }
+    ];
+
+    // Submission type data
+    const submissionTypeCounts = {
+      'INDIVIDUAL': 0,
+      'GROUP / ORGANIZATION / ASSOCIATION': 0,
+      'ANONYMOUS': 0
+    };
+    
     filteredFeedbacks.forEach(f => {
-      const rating = f.rating || f.overallRating || 0;
-      if (rating >= 4) sentimentCounts.positive++;
-      else if (rating >= 3) sentimentCounts.neutral++;
-      else sentimentCounts.negative++;
+      const type = f.submissionType || 'ANONYMOUS';
+      if (submissionTypeCounts[type] !== undefined) {
+        submissionTypeCounts[type]++;
+      }
     });
     
-    const sentimentData = [
-      { name: 'Positive', value: sentimentCounts.positive, color: '#10b981' },
-      { name: 'Neutral', value: sentimentCounts.neutral, color: '#f59e0b' },
-      { name: 'Negative', value: sentimentCounts.negative, color: '#ef4444' }
+    const submissionTypeData = [
+      { name: 'Individual', value: submissionTypeCounts['INDIVIDUAL'], color: '#3b82f6' },
+      { name: 'Group', value: submissionTypeCounts['GROUP / ORGANIZATION / ASSOCIATION'], color: '#8b5cf6' },
+      { name: 'Anonymous', value: submissionTypeCounts['ANONYMOUS'], color: '#6b7280' }
     ];
 
     return {
@@ -327,9 +345,9 @@ const Dashboard = ({ onLogout }) => {
       recentFeedbacks,
       ratingDistribution,
       categoryAverages,
-      trendData,
       eventDistribution,
-      sentimentData
+      recommendationData,
+      submissionTypeData
     };
   }, [filteredFeedbacks]);
 
@@ -421,49 +439,59 @@ const Dashboard = ({ onLogout }) => {
             <div className="modal-body">
               <div className="feedback-details">
                 <div className="detail-row">
-                  <span className="detail-label">Name:</span>
-                  <span className="detail-value">{selectedFeedback.name || selectedFeedback.groupName || 'N/A'}</span>
+                  <span className="detail-label">Submission Type:</span>
+                  <span className="detail-value">{selectedFeedback.submissionType || 'N/A'}</span>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Group:</span>
-                  <span className="detail-value">{selectedFeedback.groupName || 'N/A'}</span>
-                </div>
+                {selectedFeedback.individualName && (
+                  <div className="detail-row">
+                    <span className="detail-label">Name:</span>
+                    <span className="detail-value">{selectedFeedback.individualName}</span>
+                  </div>
+                )}
+                {selectedFeedback.groupName && (
+                  <div className="detail-row">
+                    <span className="detail-label">Group Name:</span>
+                    <span className="detail-value">{selectedFeedback.groupName}</span>
+                  </div>
+                )}
                 <div className="detail-row">
                   <span className="detail-label">Event:</span>
-                  <span className="detail-value">{selectedFeedback.event || selectedFeedback.otherEvent || 'N/A'}</span>
+                  <span className="detail-value">{selectedFeedback.event || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Date:</span>
-                  <span className="detail-value">{selectedFeedback.date || 'N/A'}</span>
+                  <span className="detail-value">
+                    {selectedFeedback.submissionDate 
+                      ? new Date(selectedFeedback.submissionDate).toLocaleDateString()
+                      : 'N/A'}
+                  </span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Rating:</span>
-                  <span className="detail-value">{selectedFeedback.rating || selectedFeedback.overallRating || 'N/A'}/5</span>
+                  <span className="detail-label">Food Rating:</span>
+                  <span className="detail-value">{selectedFeedback.food || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Feedback:</span>
-                  <span className="detail-value">{selectedFeedback.feedback || selectedFeedback.comments || 'N/A'}</span>
+                  <span className="detail-label">Ambience Rating:</span>
+                  <span className="detail-value">{selectedFeedback.ambience || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Food:</span>
-                  <span className="detail-value">{selectedFeedback.food || selectedFeedback.foodRating || 'N/A'}/5</span>
+                  <span className="detail-label">Service Rating:</span>
+                  <span className="detail-value">{selectedFeedback.service || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Ambience:</span>
-                  <span className="detail-value">{selectedFeedback.ambience || selectedFeedback.ambienceRating || 'N/A'}/5</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Service:</span>
-                  <span className="detail-value">{selectedFeedback.service || selectedFeedback.serviceRating || 'N/A'}/5</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Overall Experience:</span>
-                  <span className="detail-value">{selectedFeedback.overallExperience || selectedFeedback.overallRating || 'N/A'}/5</span>
+                  <span className="detail-label">Overall Rating:</span>
+                  <span className="detail-value">{selectedFeedback.overall || 'N/A'}/5</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Would Recommend:</span>
-                  <span className="detail-value">{selectedFeedback.wouldRecommend ? 'Yes' : 'No'}</span>
+                  <span className="detail-value">{selectedFeedback.recommend || 'N/A'}</span>
                 </div>
+                {selectedFeedback.comments && (
+                  <div className="detail-row">
+                    <span className="detail-label">Comments:</span>
+                    <span className="detail-value">{selectedFeedback.comments}</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="modal-footer">
@@ -530,6 +558,25 @@ const Dashboard = ({ onLogout }) => {
             </select>
           </div>
         </div>
+        
+        <div className="sort-container">
+          <select
+            className="sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="date">Sort by Date</option>
+            <option value="overall">Sort by Rating</option>
+            <option value="recommend">Sort by Recommendation</option>
+            <option value="event">Sort by Event</option>
+          </select>
+          <button
+            className="sort-order-btn"
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </button>
+        </div>
       </div>
 
       <div className="dashboard-stats">
@@ -569,123 +616,32 @@ const Dashboard = ({ onLogout }) => {
         </div>
       </div>
 
-      <div className="horizontal-charts-section">
+      <div className="charts-section">
         <div className="section-header">
-          <h2 className="section-title">Performance Analytics</h2>
-          <p className="section-subtitle">Detailed insights into feedback trends and category performance</p>
+          <h2 className="section-title">Analytics Overview</h2>
+          <p className="section-subtitle">Event distribution, rating patterns, and submission types</p>
         </div>
         
-        <div className="horizontal-charts-container">
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Feedback Trend</h3>
-              <span className="chart-card-subtitle">Last 7 Days</span>
-            </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={statistics.trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Area
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#8b5cf6"
-                    fill="#8b5cf6"
-                    fillOpacity={0.6}
-                    name="Feedback Count"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="rating"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    name="Average Rating"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
+        <div className="charts-container">
           <div className="chart-card">
             <div className="chart-card-header">
               <h3 className="chart-card-title">Category Performance</h3>
               <span className="chart-card-subtitle">Average Ratings</span>
             </div>
             <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart
-                  data={Object.entries(statistics.categoryAverages).map(([category, value]) => ({
-                    category: category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).substring(0, 10),
-                    value: Number(value)
-                  }))}
-                  layout="horizontal"
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 5]} />
-                  <YAxis dataKey="category" type="category" width={80} />
+              <ResponsiveContainer width="100%" height={250}>
+                <RadarChart data={[
+                  { category: 'Food', value: Number(statistics.categoryAverages.food) },
+                  { category: 'Ambience', value: Number(statistics.categoryAverages.ambience) },
+                  { category: 'Service', value: Number(statistics.categoryAverages.service) },
+                  { category: 'Overall', value: Number(statistics.categoryAverages.overall) }
+                ]}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="category" />
+                  <PolarRadiusAxis angle={90} domain={[0, 5]} />
+                  <Radar name="Rating" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#8b5cf6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Rating Distribution</h3>
-              <span className="chart-card-subtitle">Customer Satisfaction</span>
-            </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={statistics.ratingDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="rating" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#8b5cf6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="analytics-charts-section">
-        <div className="section-header">
-          <h2 className="section-title">Analytics Overview</h2>
-          <p className="section-subtitle">Event distribution, rating patterns, and sentiment analysis</p>
-        </div>
-        
-        <div className="analytics-charts-container">
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Top Events</h3>
-              <span className="chart-card-subtitle">Most frequent events</span>
-            </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={statistics.eventDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ event, percent }) => `${event}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={70}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {statistics.eventDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`#${Math.floor(Math.random()*16777215).toString(16)}`} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
+                </RadarChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -696,7 +652,7 @@ const Dashboard = ({ onLogout }) => {
               <span className="chart-card-subtitle">Customer satisfaction levels</span>
             </div>
             <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={statistics.ratingDistribution}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="rating" />
@@ -710,23 +666,78 @@ const Dashboard = ({ onLogout }) => {
           
           <div className="chart-card">
             <div className="chart-card-header">
-              <h3 className="chart-card-title">Sentiment Analysis</h3>
-              <span className="chart-card-subtitle">Customer sentiment breakdown</span>
+              <h3 className="chart-card-title">Top Events</h3>
+              <span className="chart-card-subtitle">Most frequent events</span>
             </div>
             <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={statistics.eventDistribution} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="event" type="category" width={80} />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8b5cf6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pie-charts-section">
+        <div className="section-header">
+          <h2 className="section-title">Distribution Analysis</h2>
+          <p className="section-subtitle">Customer recommendations and submission types</p>
+        </div>
+        
+        <div className="pie-charts-container">
+          <div className="chart-card">
+            <div className="chart-card-header">
+              <h3 className="chart-card-title">Recommendation Distribution</h3>
+              <span className="chart-card-subtitle">Would customers recommend us?</span>
+            </div>
+            <div className="chart-card-content">
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={statistics.sentimentData}
+                    data={statistics.recommendationData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={70}
+                    outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {statistics.sentimentData.map((entry, index) => (
+                    {statistics.recommendationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          <div className="chart-card">
+            <div className="chart-card-header">
+              <h3 className="chart-card-title">Submission Types</h3>
+              <span className="chart-card-subtitle">How customers are submitting feedback</span>
+            </div>
+            <div className="chart-card-content">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={statistics.submissionTypeData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {statistics.submissionTypeData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -742,13 +753,13 @@ const Dashboard = ({ onLogout }) => {
         <div className="table-header">
           <h2 className="table-title">Recent Feedback</h2>
           <div className="table-actions">
-            <button className="export-btn" onClick={exportToPDF}>
+            <button className="export-btn" onClick={exportToCSV}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
-              Export PDF
+              Export CSV
             </button>
           </div>
         </div>
@@ -766,37 +777,45 @@ const Dashboard = ({ onLogout }) => {
                   <tr>
                     <th>Date</th>
                     <th>Name/Group</th>
+                    <th>Type</th>
                     <th>Event</th>
-                    <th>Rating</th>
-                    <th>Feedback</th>
-                    <th>Food</th>
-                    <th>Ambience</th>
-                    <th>Service</th>
                     <th>Overall</th>
                     <th>Recommend</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentFeedbacks.map((feedback) => (
-                    <tr key={feedback.id || `${feedback.name}-${feedback.date}`}>
-                      <td>{feedback.date || 'N/A'}</td>
+                  {currentFeedbacks.map((feedback, index) => (
+                    <tr key={feedback.id || `feedback-${index}-${Date.now()}`}>
+                      <td>
+                        {feedback.submissionDate 
+                          ? new Date(feedback.submissionDate).toLocaleDateString()
+                          : 'N/A'}
+                      </td>
                       <td>
                         <div className="name-group">
-                          <div className="name">{feedback.name || feedback.groupName || 'N/A'}</div>
-                          <div className="group">{feedback.groupName || 'N/A'}</div>
+                          <div className="name">
+                            {feedback.individualName || feedback.groupName || 'Anonymous'}
+                          </div>
                         </div>
                       </td>
-                      <td>{feedback.event || feedback.otherEvent || 'N/A'}</td>
+                      <td>
+                        <span className="submission-type-badge">
+                          {feedback.submissionType === 'INDIVIDUAL' && 'Individual'}
+                          {feedback.submissionType === 'GROUP / ORGANIZATION / ASSOCIATION' && 'Group'}
+                          {feedback.submissionType === 'ANONYMOUS' && 'Anonymous'}
+                        </span>
+                      </td>
+                      <td>{feedback.event || 'N/A'}</td>
                       <td>
                         <div className="rating-container">
-                          <div className="rating-value">{feedback.rating || feedback.overallRating || 'N/A'}</div>
+                          <div className="rating-value">{feedback.overall || 'N/A'}/5</div>
                           <div className="rating-stars">
                             {[...Array(5)].map((_, i) => (
                               <span
-                                key={`${feedback.id || feedback.name}-star-${i}`}
+                                key={`${feedback.id || `feedback-${index}`}-star-${i}`}
                                 className={
-                                  i < Math.floor(feedback.rating || feedback.overallRating || 0)
+                                  i < Math.floor(parseFloat(feedback.overall) || 0)
                                     ? 'star filled'
                                     : 'star'
                                 }
@@ -807,12 +826,11 @@ const Dashboard = ({ onLogout }) => {
                           </div>
                         </div>
                       </td>
-                      <td className="feedback-text">{feedback.feedback || feedback.comments || 'N/A'}</td>
-                      <td>{feedback.food || feedback.foodRating || 'N/A'}</td>
-                      <td>{feedback.ambience || feedback.ambienceRating || 'N/A'}</td>
-                      <td>{feedback.service || feedback.serviceRating || 'N/A'}</td>
-                      <td>{feedback.overallExperience || feedback.overallRating || 'N/A'}</td>
-                      <td>{feedback.wouldRecommend ? 'Yes' : 'No'}</td>
+                      <td>
+                        <span className={`recommendation-badge ${feedback.recommend === 'Yes' ? 'yes' : 'no'}`}>
+                          {feedback.recommend || 'N/A'}
+                        </span>
+                      </td>
                       <td>
                         <div className="action-menu-container">
                           <button 

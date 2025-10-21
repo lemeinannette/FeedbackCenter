@@ -246,7 +246,9 @@ const FeedbackForm = () => {
       let dataToSubmit = {
         ...formData,
         id: uniqueId,
-        date: new Date().toISOString().split('T')[0]
+        submissionKey: uniqueId, // Add a unique key that can be used for rendering
+        submissionDate: new Date().toISOString(), // Use a more specific timestamp
+        submissionTimestamp: Date.now() // Add timestamp for sorting
       };
       
       // Handle event type
@@ -361,7 +363,7 @@ const FeedbackForm = () => {
           <div className="rating-stars">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
-                key={`${name}-${star}`}
+                key={`${name}-${star}-${Date.now()}`} // Ensure unique keys even for rerenders
                 type="button"
                 className={`rating-star ${star <= rating ? 'active' : ''}`}
                 onClick={() => handleRatingChange(name, star)}
