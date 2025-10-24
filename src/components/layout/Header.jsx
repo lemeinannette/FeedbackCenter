@@ -34,12 +34,16 @@ const Header = () => {
         <div className="header-container">
           <Link to="/" className="logo">
             <div className="logo-icon">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 2L4 8V14C4 19.5 8.5 24.8 14 26C19.5 24.8 24 19.5 24 14V8L14 2Z" fill="white" fillOpacity="0.15"/>
-                <path d="M10 12L14 16L20 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <div className="logo-inner">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             </div>
-            <span className="logo-text">Feedback Center</span>
+            <div className="logo-text">
+              <span className="logo-text-top">Feedback</span>
+              <span className="logo-text-bottom">Centre</span>
+            </div>
           </Link>
           
           <nav className={`nav ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
