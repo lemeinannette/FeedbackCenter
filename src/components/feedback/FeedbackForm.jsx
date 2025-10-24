@@ -1,5 +1,5 @@
 // src/components/feedback/FeedbackForm.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../layout/Header';
 import EventDropdown from './EventDropdown';
@@ -49,22 +49,15 @@ const FeedbackForm = () => {
       document.body.classList.add('dark-theme');
     }
     
-    // Reset all form states on component mount
-    setShowThankYou(false);
-    setSubmitClicked(false);
-    setSubmissionComplete(false);
-    setSubmissionId(null);
-    console.log('Component mounted, showThankYou reset to false');
-  }, []);
-
-  // Track state changes for debugging
-  useEffect(() => {
-    console.log('showThankYou changed to:', showThankYou);
-  }, [showThankYou]);
-
-  useEffect(() => {
-    console.log('submissionComplete changed to:', submissionComplete);
-  }, [submissionComplete]);
+    // Only reset states if they're not already in the correct state
+    if (showThankYou) {
+      setShowThankYou(false);
+      setSubmitClicked(false);
+      setSubmissionComplete(false);
+      setSubmissionId(null);
+      console.log('Component mounted, showThankYou reset to false');
+    }
+  }, []); // Empty dependency array means this only runs once on mount
 
   // Calculate form progress
   useEffect(() => {
@@ -102,7 +95,7 @@ const FeedbackForm = () => {
   }, [formData]);
 
   // Toggle theme only for the form
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newTheme = !isDarkTheme;
     setIsDarkTheme(newTheme);
     localStorage.setItem('feedbackFormTheme', newTheme ? 'dark' : 'light');
@@ -112,9 +105,9 @@ const FeedbackForm = () => {
     } else {
       document.body.classList.remove('dark-theme');
     }
-  };
+  }, [isDarkTheme]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -127,30 +120,30 @@ const FeedbackForm = () => {
         [name]: null
       }));
     }
-  };
+  }, [errors]);
 
-  const handleToggleChange = (name) => {
+  const handleToggleChange = useCallback((name) => {
     setFormData(prev => ({
       ...prev,
       [name]: !prev[name]
     }));
-  };
+  }, []);
 
-  const handleRatingChange = (name, rating) => {
+  const handleRatingChange = useCallback((name, rating) => {
     setFormData(prev => ({
       ...prev,
       [name]: rating
     }));
-  };
+  }, []);
 
-  const handleRecommendationChange = (value) => {
+  const handleRecommendationChange = useCallback((value) => {
     setFormData(prev => ({
       ...prev,
       wouldRecommend: value
     }));
-  };
+  }, []);
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors = {};
     
     if (formData.feedbackType === 'individual') {
@@ -212,17 +205,14 @@ const FeedbackForm = () => {
     }
     
     return newErrors;
-  };
+  }, [formData]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     console.log('Submit button clicked');
     
-    // Only proceed if submit was actually clicked
-    if (!submitClicked) {
-      console.log('Submit was not clicked, aborting');
-      return;
-    }
+    // Set submitClicked to true to indicate submission was attempted
+    setSubmitClicked(true);
     
     const newErrors = validateForm();
     
@@ -303,10 +293,7 @@ const FeedbackForm = () => {
       setSubmissionComplete(true);
       console.log('Setting showThankYou to true, submission complete');
       
-      // Navigate to thank you page after a short delay to ensure state is set
-      setTimeout(() => {
-        navigate('/thank-you', { state: { from: location.pathname } });
-      }, 100);
+      // Don't navigate here - let the conditional rendering handle showing the thank you page
     } catch (error) {
       console.error('Error submitting feedback:', error);
       setErrors({ form: 'An error occurred while submitting your feedback. Please try again.' });
@@ -316,9 +303,9 @@ const FeedbackForm = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [submitClicked, validateForm, formData]);
 
-  const handleResetForm = () => {
+  const handleResetForm = useCallback(() => {
     console.log('Resetting form');
     setFormData({
       feedbackType: 'individual',
@@ -344,10 +331,10 @@ const FeedbackForm = () => {
     setSubmissionId(null);
     setActiveSection('personal');
     console.log('Form reset complete, showThankYou set to false');
-  };
+  }, []);
 
   // Modern star rating component with gold stars
-  const renderStars = (name, rating) => {
+  const renderStars = useCallback((name, rating) => {
     const labelName = name === 'foodRating' ? 'Food' : 
                      name === 'ambienceRating' ? 'Ambience' : 
                      name === 'serviceRating' ? 'Service' : 
@@ -363,7 +350,7 @@ const FeedbackForm = () => {
           <div className="rating-stars">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
-                key={`${name}-${star}-${Date.now()}`} // Ensure unique keys even for rerenders
+                key={`${name}-${star}`}
                 type="button"
                 className={`rating-star ${star <= rating ? 'active' : ''}`}
                 onClick={() => handleRatingChange(name, star)}
@@ -375,7 +362,7 @@ const FeedbackForm = () => {
         </div>
       </div>
     );
-  };
+  }, [handleRatingChange]);
 
   // Only show thank you message if submission is complete
   if (showThankYou === true && submissionComplete === true) {

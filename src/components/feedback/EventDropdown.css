@@ -1,4 +1,5 @@
 /* src/components/feedback/EventDropdown.css */
+@import '../../styles/theme.css';
 .select-wrapper {
   position: relative;
 }

@@ -1,5 +1,6 @@
 /* src/components/feedback/ThankYou.css */
-
+/* Import cool fonts */
+@import '../../styles/theme.css';
 .thank-you-container {
   display: flex;
   justify-content: center;
