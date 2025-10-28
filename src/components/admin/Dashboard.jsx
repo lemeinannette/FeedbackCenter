@@ -108,7 +108,7 @@ const Dashboard = ({ onLogout }) => {
   // Export to CSV function
   const exportToCSV = () => {
     const csvContent = [
-      ['Date', 'Name', 'Group', 'Event', 'Food', 'Ambience', 'Service', 'Overall', 'Recommend', 'Comments'],
+      ['Date', 'Name', 'Group', 'Event Name', 'Food', 'Ambience', 'Service', 'Overall', 'Recommend', 'Comments'],
       ...filteredFeedbacks.map(f => [
         f.submissionDate || f.date || 'N/A',
         f.individualName || f.groupName || 'Anonymous',
@@ -240,7 +240,8 @@ const Dashboard = ({ onLogout }) => {
         categoryAverages: {},
         eventDistribution: [],
         recommendationData: [],
-        submissionTypeData: []
+        submissionTypeData: [],
+        categoryRatingData: []
       };
     }
 
@@ -264,23 +265,40 @@ const Dashboard = ({ onLogout }) => {
       return date >= weekAgo;
     }).length;
 
-    // Rating distribution
-    const ratingCounts = [0, 0, 0, 0, 0];
-    filteredFeedbacks.forEach(f => {
-      const rating = parseFloat(f.overall);
-      if (rating >= 1 && rating <= 5) {
-        ratingCounts[Math.floor(rating) - 1]++;
-      }
-    });
+    // Rating distribution for each category
+    const categories = ['food', 'ambience', 'service', 'overall'];
+    const categoryRatingData = [];
     
-    const ratingDistribution = ratingCounts.map((count, index) => ({
-      rating: `${index + 1} Star`,
-      count,
-      percentage: totalFeedbacks > 0 ? ((count / totalFeedbacks) * 100).toFixed(0) : 0
-    }));
+    categories.forEach(category => {
+      const ratingCounts = [0, 0, 0, 0, 0];
+      filteredFeedbacks.forEach(f => {
+        const rating = parseFloat(f[category]);
+        if (rating >= 1 && rating <= 5) {
+          ratingCounts[Math.floor(rating) - 1]++;
+        }
+      });
+      
+      // Calculate average for this category
+      const validRatings = filteredFeedbacks
+        .map(f => parseFloat(f[category]))
+        .filter(rating => !isNaN(rating));
+      
+      const avgRating = validRatings.length > 0
+        ? (validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length).toFixed(1)
+        : 0;
+      
+      categoryRatingData.push({
+        category: category.charAt(0).toUpperCase() + category.slice(1),
+        avgRating: parseFloat(avgRating),
+        rating1: ratingCounts[0],
+        rating2: ratingCounts[1],
+        rating3: ratingCounts[2],
+        rating4: ratingCounts[3],
+        rating5: ratingCounts[4]
+      });
+    });
 
     // Category averages
-    const categories = ['food', 'ambience', 'service', 'overall'];
     const categoryAverages = {};
     
     categories.forEach(category => {
@@ -343,11 +361,11 @@ const Dashboard = ({ onLogout }) => {
       averageRating,
       recommendationRate,
       recentFeedbacks,
-      ratingDistribution,
       categoryAverages,
       eventDistribution,
       recommendationData,
-      submissionTypeData
+      submissionTypeData,
+      categoryRatingData
     };
   }, [filteredFeedbacks]);
 
@@ -455,7 +473,7 @@ const Dashboard = ({ onLogout }) => {
                   </div>
                 )}
                 <div className="detail-row">
-                  <span className="detail-label">Event:</span>
+                  <span className="detail-label">Event Name:</span>
                   <span className="detail-value">{selectedFeedback.event || 'N/A'}</span>
                 </div>
                 <div className="detail-row">
@@ -579,343 +597,356 @@ const Dashboard = ({ onLogout }) => {
         </div>
       </div>
 
-      <div className="dashboard-stats">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <h3 className="stat-title">Total Feedbacks</h3>
-            <div className="stat-icon">📊</div>
-          </div>
-          <div className="stat-value">{statistics.totalFeedbacks}</div>
-          <div className="stat-change positive">
-            +{statistics.recentFeedbacks} this week
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <h3 className="stat-title">Average Rating</h3>
-            <div className="stat-icon">⭐</div>
-          </div>
-          <div className="stat-value">{statistics.averageRating}/5.0</div>
-          <div className="stat-change neutral">
-            Based on {statistics.totalFeedbacks} reviews
-          </div>
-        </div>
-        
-        <div className="stat-card recommendation-card">
-          <div className="stat-card-header">
-            <h3 className="stat-title">Recommendation Rate</h3>
-            <div className="stat-icon">👍</div>
-          </div>
-          <div className="recommendation-text">
-            <div className="recommendation-percent">{statistics.recommendationRate}%</div>
-            <div className="recommendation-label">Would recommend</div>
-            <div className="not-recommend-percent">{100 - statistics.recommendationRate}%</div>
-            <div className="not-recommend-label">Would not recommend</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="charts-section">
-        <div className="section-header">
-          <h2 className="section-title">Analytics Overview</h2>
-          <p className="section-subtitle">Event distribution, rating patterns, and submission types</p>
-        </div>
-        
-        <div className="charts-container">
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Category Performance</h3>
-              <span className="chart-card-subtitle">Average Ratings</span>
+      <div className="dashboard-main">
+        {/* Summary Section */}
+        <div className="summary-section">
+          <div className="summary-card">
+            <div className="summary-card-header">
+              <h3 className="summary-title">Total Feedback</h3>
+              <div className="summary-icon">📊</div>
             </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={250}>
-                <RadarChart data={[
-                  { category: 'Food', value: Number(statistics.categoryAverages.food) },
-                  { category: 'Ambience', value: Number(statistics.categoryAverages.ambience) },
-                  { category: 'Service', value: Number(statistics.categoryAverages.service) },
-                  { category: 'Overall', value: Number(statistics.categoryAverages.overall) }
-                ]}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="category" />
-                  <PolarRadiusAxis angle={90} domain={[0, 5]} />
-                  <Radar name="Rating" dataKey="value" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Rating Distribution</h3>
-              <span className="chart-card-subtitle">Customer satisfaction levels</span>
-            </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={statistics.ratingDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="rating" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#8b5cf6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Top Events</h3>
-              <span className="chart-card-subtitle">Most frequent events</span>
-            </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={statistics.eventDistribution} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="event" type="category" width={80} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#8b5cf6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="pie-charts-section">
-        <div className="section-header">
-          <h2 className="section-title">Distribution Analysis</h2>
-          <p className="section-subtitle">Customer recommendations and submission types</p>
-        </div>
-        
-        <div className="pie-charts-container">
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Recommendation Distribution</h3>
-              <span className="chart-card-subtitle">Would customers recommend us?</span>
-            </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={statistics.recommendationData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statistics.recommendationData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div className="chart-card">
-            <div className="chart-card-header">
-              <h3 className="chart-card-title">Submission Types</h3>
-              <span className="chart-card-subtitle">How customers are submitting feedback</span>
-            </div>
-            <div className="chart-card-content">
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={statistics.submissionTypeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statistics.submissionTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="feedback-table-container">
-        <div className="table-header">
-          <h2 className="table-title">Recent Feedback</h2>
-          <div className="table-actions">
-            <button className="export-btn" onClick={exportToCSV}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              Export CSV
-            </button>
-          </div>
-        </div>
-
-        {feedbacks.length === 0 ? (
-          <div className="no-feedback-container">
-            <h3>No feedback data available</h3>
-            <p>Feedback will appear here when clients submit the form.</p>
-          </div>
-        ) : (
-          <>
-            <div className="table-container">
-              <table className="feedback-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Name/Group</th>
-                    <th>Type</th>
-                    <th>Event</th>
-                    <th>Overall</th>
-                    <th>Recommend</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentFeedbacks.map((feedback, index) => (
-                    <tr key={feedback.id || `feedback-${index}-${Date.now()}`}>
-                      <td>
-                        {feedback.submissionDate 
-                          ? new Date(feedback.submissionDate).toLocaleDateString()
-                          : 'N/A'}
-                      </td>
-                      <td>
-                        <div className="name-group">
-                          <div className="name">
-                            {feedback.individualName || feedback.groupName || 'Anonymous'}
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="submission-type-badge">
-                          {feedback.submissionType === 'INDIVIDUAL' && 'Individual'}
-                          {feedback.submissionType === 'GROUP / ORGANIZATION / ASSOCIATION' && 'Group'}
-                          {feedback.submissionType === 'ANONYMOUS' && 'Anonymous'}
-                        </span>
-                      </td>
-                      <td>{feedback.event || 'N/A'}</td>
-                      <td>
-                        <div className="rating-container">
-                          <div className="rating-value">{feedback.overall || 'N/A'}/5</div>
-                          <div className="rating-stars">
-                            {[...Array(5)].map((_, i) => (
-                              <span
-                                key={`${feedback.id || `feedback-${index}`}-star-${i}`}
-                                className={
-                                  i < Math.floor(parseFloat(feedback.overall) || 0)
-                                    ? 'star filled'
-                                    : 'star'
-                                }
-                              >
-                                ★
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`recommendation-badge ${feedback.recommend === 'Yes' ? 'yes' : 'no'}`}>
-                          {feedback.recommend || 'N/A'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-menu-container">
-                          <button 
-                            className="action-menu-btn"
-                            onClick={() => setShowActionMenu(showActionMenu === feedback.id ? null : feedback.id)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="1"></circle>
-                              <circle cx="12" cy="5" r="1"></circle>
-                              <circle cx="12" cy="19" r="1"></circle>
-                            </svg>
-                          </button>
-                          {showActionMenu === feedback.id && (
-                            <div className="action-menu">
-                              <button 
-                                className="action-menu-item"
-                                onClick={() => viewFeedbackDetails(feedback)}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                  <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                View Details
-                              </button>
-                              <button 
-                                className="action-menu-item"
-                                onClick={() => deleteFeedback(feedback.id)}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="3 6 5 6 21 6"></polyline>
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="pagination-container">
-              <div className="pagination-info">
-                Showing {indexOfFirstItem + 1} to{' '}
-                {Math.min(indexOfLastItem, filteredFeedbacks.length)} of{' '}
-                {filteredFeedbacks.length} entries
+            <div className="summary-value">{statistics.totalFeedbacks}</div>
+            <div className="summary-details">
+              <div className="summary-detail">
+                <span className="detail-label">This Week:</span>
+                <span className="detail-value">+{statistics.recentFeedbacks}</span>
               </div>
-              <div className="pagination-controls">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="pagination-btn"
-                >
-                  Previous
-                </button>
-                <div className="page-numbers">
-                  {Array.from(
-                    { length: Math.ceil(filteredFeedbacks.length / itemsPerPage) },
-                    (_, i) => i + 1
-                  ).map((page) => (
-                    <button
-                      key={`page-${page}`}
-                      onClick={() => paginate(page)}
-                      className={`page-number ${currentPage === page ? 'active' : ''}`}
+              <div className="summary-detail">
+                <span className="detail-label">Avg. Per Day:</span>
+                <span className="detail-value">{(statistics.totalFeedbacks / 30).toFixed(1)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="summary-card">
+            <div className="summary-card-header">
+              <h3 className="summary-title">Average Rating</h3>
+              <div className="summary-icon">⭐</div>
+            </div>
+            <div className="summary-value">{statistics.averageRating}/5.0</div>
+            <div className="summary-details">
+              <div className="summary-detail">
+                <span className="detail-label">Food:</span>
+                <span className="detail-value">{statistics.categoryAverages.food}/5</span>
+              </div>
+              <div className="summary-detail">
+                <span className="detail-label">Service:</span>
+                <span className="detail-value">{statistics.categoryAverages.service}/5</span>
+              </div>
+              <div className="summary-detail">
+                <span className="detail-label">Ambience:</span>
+                <span className="detail-value">{statistics.categoryAverages.ambience}/5</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="summary-card recommendation-summary">
+            <div className="summary-card-header">
+              <h3 className="summary-title">Recommendation Rate</h3>
+              <div className="summary-icon">👍</div>
+            </div>
+            <div className="recommendation-text">
+              <div className="recommendation-percent">{statistics.recommendationRate}%</div>
+              <div className="recommendation-label">Would recommend</div>
+              <div className="not-recommend-container">
+                <div className="not-recommend-percent">{100 - statistics.recommendationRate}%</div>
+                <div className="not-recommend-label">Would not recommend</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="charts-section">
+          <div className="charts-header">
+            <div>
+              <h2 className="charts-title">Analytics Overview</h2>
+              <p className="charts-subtitle">Category performance and rating patterns</p>
+            </div>
+          </div>
+          
+          <div className="charts-container">
+            <div className="chart-card">
+              <div className="chart-card-header">
+                <h3 className="chart-card-title">Category Performance</h3>
+                <span className="chart-card-subtitle">Average Ratings</span>
+              </div>
+              <div className="chart-card-content">
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart data={[
+                    { category: 'Food', value: Number(statistics.categoryAverages.food) },
+                    { category: 'Ambience', value: Number(statistics.categoryAverages.ambience) },
+                    { category: 'Service', value: Number(statistics.categoryAverages.service) },
+                    { category: 'Overall', value: Number(statistics.categoryAverages.overall) }
+                  ]}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="category" />
+                    <PolarRadiusAxis angle={90} domain={[0, 5]} />
+                    <Radar name="Rating" dataKey="value" stroke="#6366f1" fill="#6366f1" fillOpacity={0.6} />
+                    <Tooltip />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            <div className="chart-card">
+              <div className="chart-card-header">
+                <h3 className="chart-card-title">Rating Distribution</h3>
+                <span className="chart-card-subtitle">Rating breakdown by category</span>
+              </div>
+              <div className="chart-card-content">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={statistics.categoryRatingData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="category" />
+                    <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="avgRating" fill="#6366f1" name="Average Rating" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Distribution Section */}
+        <div className="distribution-section">
+          <div className="distribution-header">
+            <div>
+              <h2 className="distribution-title">Distribution Analysis</h2>
+              <p className="distribution-subtitle">Customer recommendations and submission types</p>
+            </div>
+          </div>
+          
+          <div className="distribution-container">
+            <div className="chart-card">
+              <div className="chart-card-header">
+                <h3 className="chart-card-title">Recommendation Distribution</h3>
+                <span className="chart-card-subtitle">Would customers recommend us?</span>
+              </div>
+              <div className="chart-card-content">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={statistics.recommendationData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
                     >
-                      {page}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={
-                    currentPage === Math.ceil(filteredFeedbacks.length / itemsPerPage)
-                  }
-                  className="pagination-btn"
-                >
-                  Next
-                </button>
+                      {statistics.recommendationData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          </>
-        )}
+            
+            <div className="chart-card">
+              <div className="chart-card-header">
+                <h3 className="chart-card-title">Submission Types</h3>
+                <span className="chart-card-subtitle">How customers are submitting feedback</span>
+              </div>
+              <div className="chart-card-content">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={statistics.submissionTypeData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {statistics.submissionTypeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Table Section */}
+        <div className="feedback-table-container">
+          <div className="table-header">
+            <h2 className="table-title">Recent Feedback</h2>
+            <div className="table-actions">
+              <button className="export-btn" onClick={exportToCSV}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          {feedbacks.length === 0 ? (
+            <div className="no-feedback-container">
+              <h3>No feedback data available</h3>
+              <p>Feedback will appear here when clients submit the form.</p>
+            </div>
+          ) : (
+            <>
+              <div className="table-container">
+                <table className="feedback-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Name/Group</th>
+                      <th>Type</th>
+                      <th>Event Name</th>
+                      <th>Overall</th>
+                      <th>Recommend</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentFeedbacks.map((feedback, index) => (
+                      <tr key={feedback.id || `feedback-${index}-${Date.now()}`}>
+                        <td>
+                          {feedback.submissionDate 
+                            ? new Date(feedback.submissionDate).toLocaleDateString()
+                            : 'N/A'}
+                        </td>
+                        <td>
+                          <div className="name-group">
+                            <div className="name">
+                              {feedback.individualName || feedback.groupName || 'Anonymous'}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="submission-type-badge">
+                            {feedback.submissionType === 'INDIVIDUAL' && 'Individual'}
+                            {feedback.submissionType === 'GROUP / ORGANIZATION / ASSOCIATION' && 'Group'}
+                            {feedback.submissionType === 'ANONYMOUS' && 'Anonymous'}
+                          </span>
+                        </td>
+                        <td>{feedback.event || 'N/A'}</td>
+                        <td>
+                          <div className="rating-container">
+                            <div className="rating-value">{feedback.overall || 'N/A'}/5</div>
+                            <div className="rating-stars">
+                              {[...Array(5)].map((_, i) => (
+                                <span
+                                  key={`${feedback.id || `feedback-${index}`}-star-${i}`}
+                                  className={
+                                    i < Math.floor(parseFloat(feedback.overall) || 0)
+                                      ? 'star filled'
+                                      : 'star'
+                                  }
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`recommendation-badge ${feedback.recommend === 'Yes' ? 'yes' : 'no'}`}>
+                            {feedback.recommend || 'N/A'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-menu-container">
+                            <button 
+                              className="action-menu-btn"
+                              onClick={() => setShowActionMenu(showActionMenu === feedback.id ? null : feedback.id)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="12" cy="5" r="1"></circle>
+                                <circle cx="12" cy="19" r="1"></circle>
+                              </svg>
+                            </button>
+                            {showActionMenu === feedback.id && (
+                              <div className="action-menu">
+                                <button 
+                                  className="action-menu-item"
+                                  onClick={() => viewFeedbackDetails(feedback)}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                  </svg>
+                                  View Details
+                                </button>
+                                <button 
+                                  className="action-menu-item"
+                                  onClick={() => deleteFeedback(feedback.id)}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                  </svg>
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="pagination-container">
+                <div className="pagination-info">
+                  Showing {indexOfFirstItem + 1} to{' '}
+                  {Math.min(indexOfLastItem, filteredFeedbacks.length)} of{' '}
+                  {filteredFeedbacks.length} entries
+                </div>
+                <div className="pagination-controls">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="pagination-btn"
+                  >
+                    Previous
+                  </button>
+                  <div className="page-numbers">
+                    {Array.from(
+                      { length: Math.ceil(filteredFeedbacks.length / itemsPerPage) },
+                      (_, i) => i + 1
+                    ).map((page) => (
+                      <button
+                        key={`page-${page}`}
+                        onClick={() => paginate(page)}
+                        className={`page-number ${currentPage === page ? 'active' : ''}`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={
+                      currentPage === Math.ceil(filteredFeedbacks.length / itemsPerPage)
+                    }
+                    className="pagination-btn"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
