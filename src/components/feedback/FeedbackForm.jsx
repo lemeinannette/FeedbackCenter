@@ -340,7 +340,7 @@ const FeedbackForm = () => {
     setActiveSection('personal');
   }, []);
 
-  // Enhanced star rating component with hover effects
+  // Enhanced star rating component with responsive design and subtle animations
   const renderStars = useCallback((name, rating) => {
     const labelName = name === 'foodRating' ? 'Food' : 
                      name === 'ambienceRating' ? 'Ambience' : 
@@ -357,7 +357,7 @@ const FeedbackForm = () => {
           <div className="rating-value">
             <span className="rating-text">{rating > 0 ? `${rating}/5` : 'Not rated'}</span>
           </div>
-          <div className="rating-stars">
+          <div className="rating-stars" role="group" aria-label={`Rate ${labelName}`}>
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={`${name}-${star}`}
@@ -366,8 +366,20 @@ const FeedbackForm = () => {
                 onClick={() => handleRatingChange(name, star)}
                 onMouseEnter={() => handleRatingHover(name, star)}
                 onMouseLeave={handleRatingLeave}
+                aria-label={`Rate ${labelName} ${star} out of 5 stars`}
+                aria-pressed={star <= rating}
               >
-                <span className="star-icon">⭐</span>
+                <svg 
+                  className="star-icon" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" 
+                    fill={star <= displayRating ? "#FFD700" : "#D3D3D3"}
+                    stroke={star <= displayRating ? "#FFA500" : "#A9A9A9"}
+                    strokeWidth="1.5"
+                  />
+                </svg>
               </button>
             ))}
           </div>
@@ -399,23 +411,17 @@ const FeedbackForm = () => {
                 <p className="form-subtitle">We value your feedback and strive to improve our services</p>
               </div>
               
+              {/* Updated theme toggle with colored icons */}
               <button 
                 className={`theme-toggle ${isDarkTheme ? 'dark' : 'light'}`}
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
               >
                 <div className="toggle-track"></div>
-                <div className="toggle-thumb">
-                  <div className="sun-icon"></div>
-                  <div className="moon-icon"></div>
-                </div>
+                <div className="toggle-thumb"></div>
                 <div className="toggle-icons">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="sun-icon-static">
-                    <path fillRule="evenodd" d="M8 1a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 1zM8 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM3.75 7.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM10.75 7.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5zM3.28 4.22a.75.75 0 00-1.06 1.06l1.06 1.06a.75.75 0 001.06-1.06L3.28 4.22zM12.72 4.22a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM4.22 12.72a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zM12.72 12.72a.75.75 0 011.06 0l1.06 1.06a.75.75 0 11-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06z" clipRule="evenodd" />
-                  </svg>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="moon-icon-static">
-                    <path d="M9.598 1.591a.75.75 0 01.785.175 7 7 0 11-8.967 8.967.75.75 0 01.96-.96 5.5 5.5 0 007.222-7.222z" />
-                  </svg>
+                  <span className="sun-icon">☀️</span>
+                  <span className="moon-icon">🌙</span>
                 </div>
               </button>
             </div>
@@ -442,6 +448,7 @@ const FeedbackForm = () => {
                 type="button" 
                 className={`nav-item ${activeSection === 'personal' ? 'active' : ''}`}
                 onClick={() => setActiveSection('personal')}
+                aria-label="Personal Information"
               >
                 <div className="nav-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -456,6 +463,7 @@ const FeedbackForm = () => {
                 type="button" 
                 className={`nav-item ${activeSection === 'event' ? 'active' : ''}`}
                 onClick={() => setActiveSection('event')}
+                aria-label="Event Details"
               >
                 <div className="nav-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -472,6 +480,7 @@ const FeedbackForm = () => {
                 type="button" 
                 className={`nav-item ${activeSection === 'ratings' ? 'active' : ''}`}
                 onClick={() => setActiveSection('ratings')}
+                aria-label="Ratings"
               >
                 <div className="nav-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -485,6 +494,7 @@ const FeedbackForm = () => {
                 type="button" 
                 className={`nav-item ${activeSection === 'comments' ? 'active' : ''}`}
                 onClick={() => setActiveSection('comments')}
+                aria-label="Comments"
               >
                 <div className="nav-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -504,7 +514,7 @@ const FeedbackForm = () => {
               
               {/* Feedback Type - Three single radio buttons */}
               <div className="form-group">
-                <label className="form-label">Feedback Type</label>
+                <h3 className="form-label">Feedback Type</h3>
                 <div className="radio-group">
                   <label htmlFor="feedbackTypeAnonymous" className="radio-label">
                     <input
@@ -808,49 +818,49 @@ const FeedbackForm = () => {
               
               <div className="rating-items-container">
                 {renderStars('foodRating', formData.foodRating)}
-                {errors.foodRating && <div className="invalid-feedback">{errors.foodRating}</div>}
+                {errors.foodRating && <div className="invalid-feedback rating-error">{errors.foodRating}</div>}
                 
                 {renderStars('ambienceRating', formData.ambienceRating)}
-                {errors.ambienceRating && <div className="invalid-feedback">{errors.ambienceRating}</div>}
+                {errors.ambienceRating && <div className="invalid-feedback rating-error">{errors.ambienceRating}</div>}
                 
                 {renderStars('serviceRating', formData.serviceRating)}
-                {errors.serviceRating && <div className="invalid-feedback">{errors.serviceRating}</div>}
+                {errors.serviceRating && <div className="invalid-feedback rating-error">{errors.serviceRating}</div>}
                 
                 {renderStars('overallRating', formData.overallRating)}
-                {errors.overallRating && <div className="invalid-feedback">{errors.overallRating}</div>}
+                {errors.overallRating && <div className="invalid-feedback rating-error">{errors.overallRating}</div>}
               </div>
               
               {/* Recommendation with Theme-Aware Emojis */}
               <div className="form-group">
-                <label className="form-label">Would you recommend us?</label>
-                <div className="recommendation-options">
-                  <button
-                    type="button"
-                    id="recommendYes"
-                    className={`recommendation-btn ${formData.wouldRecommend === true ? 'active yes' : ''}`}
-                    onClick={() => handleRecommendationChange(true)}
-                    aria-pressed={formData.wouldRecommend === true}
-                    aria-label="Yes, I would recommend"
-                  >
-                    <div className="recommendation-icon">
-                      <span className={`emoji happy ${isDarkTheme ? 'dark-theme' : ''}`}>😊</span>
-                    </div>
-                    <span>YES</span>
-                  </button>
-                  <button
-                    type="button"
-                    id="recommendNo"
-                    className={`recommendation-btn ${formData.wouldRecommend === false ? 'active no' : ''}`}
-                    onClick={() => handleRecommendationChange(false)}
-                    aria-pressed={formData.wouldRecommend === false}
-                    aria-label="No, I would not recommend"
-                  >
-                    <div className="recommendation-icon">
-                      <span className={`emoji sad ${isDarkTheme ? 'dark-theme' : ''}`}>😞</span>
-                    </div>
-                    <span>NO</span>
-                  </button>
-                </div>
+                <fieldset>
+                  <legend className="form-label">Would you recommend us?</legend>
+                  <div className="recommendation-options">
+                    <button
+                      type="button"
+                      id="recommendYes"
+                      className={`recommendation-btn ${formData.wouldRecommend === true ? 'active yes' : ''}`}
+                      onClick={() => handleRecommendationChange(true)}
+                      aria-pressed={formData.wouldRecommend === true}
+                    >
+                      <div className="recommendation-icon">
+                        <span className={`emoji happy ${isDarkTheme ? 'dark-theme' : ''}`}>😊</span>
+                      </div>
+                      <span>YES</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="recommendNo"
+                      className={`recommendation-btn ${formData.wouldRecommend === false ? 'active no' : ''}`}
+                      onClick={() => handleRecommendationChange(false)}
+                      aria-pressed={formData.wouldRecommend === false}
+                    >
+                      <div className="recommendation-icon">
+                        <span className={`emoji sad ${isDarkTheme ? 'dark-theme' : ''}`}>😞</span>
+                      </div>
+                      <span>NO</span>
+                    </button>
+                  </div>
+                </fieldset>
                 {errors.wouldRecommend && <div className="invalid-feedback">{errors.wouldRecommend}</div>}
               </div>
             </div>

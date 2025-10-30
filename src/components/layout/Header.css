@@ -27,6 +27,7 @@
   --header-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
+/* Header with wave background pattern */
 .header {
   position: fixed;
   top: 0;
@@ -34,6 +35,9 @@
   right: 0;
   z-index: 1000;
   background-color: var(--header-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%2314b8a6' fill-opacity='0.05' d='M0,96L48,112L96,96L144,112L192,96L240,112L288,96L336,112L384,96L432,112L480,96L528,112L576,96L624,112L672,96L720,112L768,96L816,112L864,96L912,112L960,96L1008,112L1056,96L1104,112L1152,96L1200,112L1248,96L1296,112L1344,96L1392,112L1440,96L1440,320L1392,304L1344,320L1296,304L1248,320L1200,304L1152,320L1104,304L1056,320L1008,304L960,320L912,304L864,320L816,304L768,320L720,304L672,320L624,304L576,320L528,304L480,320L432,304L384,320L336,304L288,320L240,304L192,320L144,304L96,320L48,304L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--header-shadow);
@@ -47,6 +51,10 @@
 
 .dark-theme .header.scrolled {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+.dark-theme .header {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.03' d='M0,96L48,112L96,96L144,112L192,96L240,112L288,96L336,112L384,96L432,112L480,96L528,112L576,96L624,112L672,96L720,112L768,96L816,112L864,96L912,112L960,96L1008,112L1056,96L1104,112L1152,96L1200,112L1248,96L1296,112L1344,96L1392,112L1440,96L1440,320L1392,304L1344,320L1296,304L1248,320L1200,304L1152,320L1104,304L1056,320L1008,304L960,320L912,304L864,320L816,304L768,320L720,304L672,320L624,304L576,320L528,304L480,320L432,304L384,320L336,304L288,320L240,304L192,320L144,304L96,320L48,304L0,320Z'%3E%3C/path%3E%3C/svg%3E");
 }
 
 .header-container {
@@ -84,6 +92,14 @@
   overflow: hidden;
   transition: var(--transition);
   box-shadow: 0 4px 6px -1px rgba(20, 184, 166, 0.25);
+  animation: pulse 2s infinite;
+}
+
+/* Pulse animation for logo */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(20, 184, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
 }
 
 .logo-icon::before {
@@ -134,6 +150,7 @@
   font-family: 'Space Grotesk', 'Inter', sans-serif;
   line-height: 1;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: text-shadow 0.3s ease;
 }
 
 .logo-c {
@@ -145,6 +162,7 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   margin-top: -4px;
   margin-left: 6px;
+  transition: text-shadow 0.3s ease;
 }
 
 .logo-fc::after {
@@ -156,6 +174,15 @@
   bottom: -2px;
   left: 10%;
   border-radius: 1px;
+}
+
+/* Add glow effect on hover */
+.logo:hover .logo-f {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+.logo:hover .logo-c {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
 }
 
 .logo-text {
@@ -170,6 +197,7 @@
   color: var(--logo-text-color);
   font-family: 'Space Grotesk', 'Inter', sans-serif;
   letter-spacing: -0.5px;
+  transition: var(--transition);
 }
 
 .logo-text-bottom {
@@ -180,6 +208,13 @@
   font-family: 'Space Grotesk', 'Inter', sans-serif;
   letter-spacing: -0.5px;
   margin-top: -2px;
+  transition: var(--transition);
+}
+
+/* Add hover effect to logo text */
+.logo:hover .logo-text-top,
+.logo:hover .logo-text-bottom {
+  color: var(--primary-color);
 }
 
 .nav {
