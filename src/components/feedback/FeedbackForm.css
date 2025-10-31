@@ -155,7 +155,7 @@
   font-weight: 400;
 }
 
-/* Theme toggle with colored icons */
+/* Theme toggle with custom sun and moon icons */
 .theme-toggle {
   width: 68px;
   height: 34px;
@@ -196,14 +196,14 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(90deg, #FEF3C7, #FDE68A);
   border-radius: var(--radius-full);
   transition: var(--transition-base);
   z-index: 1;
 }
 
 .dark-theme .theme-toggle .toggle-track {
-  background-color: rgba(30, 41, 59, 0.8);
+  background: linear-gradient(90deg, #4C1D95, #5B21B6);
 }
 
 .theme-toggle .toggle-thumb {
@@ -224,11 +224,11 @@
 
 .theme-toggle.dark .toggle-thumb {
   transform: translateX(34px);
-  background-color: #f3f4f6;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+  background-color: #1e293b;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
 }
 
-/* Theme toggle icons with colors */
+/* Theme toggle icons with custom shapes */
 .theme-toggle .toggle-icons {
   position: absolute;
   top: 0;
@@ -243,16 +243,76 @@
   pointer-events: none;
 }
 
+/* Custom Sun Icon */
 .theme-toggle .sun-icon-static {
-  color: #f59e0b; /* Amber color for sun */
+  width: 18px;
+  height: 18px;
+  position: relative;
   opacity: 1;
   transition: opacity 0.3s ease;
 }
 
+.sun-icon-static::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: #FFD700;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+}
+
+.sun-icon-static::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  background: radial-gradient(circle, transparent 35%, #FFD700 35%, #FFD700 40%, transparent 40%);
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: rotate-sun 20s linear infinite;
+}
+
+@keyframes rotate-sun {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Custom Moon Icon */
 .theme-toggle .moon-icon-static {
-  color: #6366f1; /* Indigo color for moon */
+  width: 18px;
+  height: 18px;
+  position: relative;
   opacity: 0.3;
   transition: opacity 0.3s ease;
+  filter: drop-shadow(0 0 3px rgba(199, 210, 254, 0.5));
+}
+
+.moon-icon-static::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #C7D2FE;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(199, 210, 254, 0.7);
+}
+
+.moon-icon-static::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 5px;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(90deg, #4C1D95, #5B21B6);
+  border-radius: 50%;
 }
 
 .theme-toggle.dark .sun-icon-static {

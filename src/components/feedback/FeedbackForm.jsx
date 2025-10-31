@@ -411,7 +411,7 @@ const FeedbackForm = () => {
                 <p className="form-subtitle">We value your feedback and strive to improve our services</p>
               </div>
               
-              {/* Updated theme toggle with colored icons */}
+              {/* Updated theme toggle with CSS-based icons */}
               <button 
                 className={`theme-toggle ${isDarkTheme ? 'dark' : 'light'}`}
                 onClick={toggleTheme}
@@ -420,8 +420,8 @@ const FeedbackForm = () => {
                 <div className="toggle-track"></div>
                 <div className="toggle-thumb"></div>
                 <div className="toggle-icons">
-                  <span className="sun-icon">☀️</span>
-                  <span className="moon-icon">🌙</span>
+                  <div className="sun-icon-static"></div>
+                  <div className="moon-icon-static"></div>
                 </div>
               </button>
             </div>
