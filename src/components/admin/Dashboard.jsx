@@ -1,7 +1,6 @@
 // src/components/admin/Dashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../layout/Header';
 import './Dashboard.css';
 import {
   BarChart,
@@ -38,7 +37,6 @@ const Dashboard = ({ onLogout }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -47,14 +45,26 @@ const Dashboard = ({ onLogout }) => {
   // Check authentication on component mount
   useEffect(() => {
     const checkAuthentication = () => {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
       
       if (!token) {
         navigate('/admin');
         return;
       }
       
-      setAuthChecked(true);
+      // Check for token expiration if stored in localStorage
+      const expirationDate = localStorage.getItem('adminTokenExpiration');
+      if (expirationDate) {
+        const now = new Date();
+        const expDate = new Date(expirationDate);
+        if (now > expDate) {
+          // Token expired, clear it and redirect
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('adminTokenExpiration');
+          navigate('/admin');
+          return;
+        }
+      }
       
       // Load feedbacks data
       try {
@@ -97,6 +107,8 @@ const Dashboard = ({ onLogout }) => {
   const handleLogout = () => {
     setShowLogoutModal(false);
     localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminTokenExpiration');
+    sessionStorage.removeItem('adminToken');
     
     if (onLogout) {
       onLogout();
@@ -373,16 +385,6 @@ const Dashboard = ({ onLogout }) => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentFeedbacks = filteredFeedbacks.slice(indexOfFirstItem, indexOfLastItem);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  // Show loading state while checking authentication
-  if (!authChecked) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Verifying authentication...</p>
-      </div>
-    );
-  }
 
   // Handle loading and errors
   if (loading) {

@@ -14,7 +14,7 @@ const AdminLogin = ({ onLogin }) => {
 
   // Check if user is already logged in
   React.useEffect(() => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
     if (token) {
       navigate('/dashboard');
     }
@@ -46,7 +46,10 @@ const AdminLogin = ({ onLogin }) => {
           sessionStorage.setItem('adminToken', token);
         }
         
-        onLogin(token);
+        if (onLogin) {
+          onLogin(token, rememberMe);
+        }
+        
         navigate('/dashboard');
       } else {
         setError('Invalid username or password');
@@ -78,10 +81,11 @@ const AdminLogin = ({ onLogin }) => {
         
         <form onSubmit={handleSubmit} className="admin-login-form">
           <div className="form-group">
-            <label htmlFor="username" className="form-label">Username</label>
+            <label htmlFor="admin-username" className="form-label">Username</label>
             <input
               type="text"
-              id="username"
+              id="admin-username"
+              name="username"
               className="form-control"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -92,11 +96,12 @@ const AdminLogin = ({ onLogin }) => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
+            <label htmlFor="admin-password" className="form-label">Password</label>
             <div className="password-input-container">
               <input
                 type={showPassword ? 'text' : 'password'}
-                id="password"
+                id="admin-password"
+                name="password"
                 className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -119,6 +124,8 @@ const AdminLogin = ({ onLogin }) => {
             <label className="checkbox-label">
               <input
                 type="checkbox"
+                id="remember-me"
+                name="rememberMe"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
@@ -136,9 +143,9 @@ const AdminLogin = ({ onLogin }) => {
           </button>
         </form>
         
-       /* <div className="admin-login-footer">
+        <div className="admin-login-footer">
           <p>For demo purposes, use: username: <strong>admin</strong>, password: <strong>password</strong></p>
-        </div>*/
+        </div>
       </div>
     </div>
   );

@@ -11,35 +11,73 @@ import './styles/theme.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     // Check for authentication token on app load
     const checkAuth = () => {
-      const token = localStorage.getItem('adminToken');
-      // In a real app, you would also validate the token's expiration
-      if (token) {
-        setIsAuthenticated(true);
+      try {
+        const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+        
+        // Check if token exists and is not expired
+        if (token) {
+          // Check for token expiration if stored in localStorage
+          const expirationDate = localStorage.getItem('adminTokenExpiration');
+          if (expirationDate) {
+            const now = new Date();
+            const expDate = new Date(expirationDate);
+            if (now > expDate) {
+              // Token expired, clear it
+              localStorage.removeItem('adminToken');
+              localStorage.removeItem('adminTokenExpiration');
+              setIsAuthenticated(false);
+            } else {
+              setIsAuthenticated(true);
+            }
+          } else {
+            // No expiration date (session token), assume valid
+            setIsAuthenticated(true);
+          }
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        // Clear any potentially corrupted tokens
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminTokenExpiration');
+        sessionStorage.removeItem('adminToken');
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+        setAuthChecked(true);
       }
-      setIsLoading(false);
     };
 
     checkAuth();
   }, []);
 
-  const login = (token) => {
-    localStorage.setItem('adminToken', token);
+  const login = (token, rememberMe = false) => {
+    if (rememberMe) {
+      localStorage.setItem('adminToken', token);
+      // Set expiration for 7 days
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + 7);
+      localStorage.setItem('adminTokenExpiration', expirationDate.toISOString());
+    } else {
+      sessionStorage.setItem('adminToken', token);
+    }
     setIsAuthenticated(true);
   };
 
   const logout = () => {
     localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminTokenExpiration');
+    sessionStorage.removeItem('adminToken');
     setIsAuthenticated(false);
   };
 
-  function ProtectedRoute({ children }) {
-    return isAuthenticated ? children : <Navigate to="/admin" replace />;
-  }
-
+  // Show loading screen while checking authentication
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -83,12 +121,14 @@ function App() {
             </>
           } />
           
-          {/* Protected dashboard route */}
+          {/* Protected dashboard route - always check authentication */}
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            isAuthenticated ? 
+            <>
               <Header />
               <Dashboard onLogout={logout} />
-            </ProtectedRoute>
+            </> : 
+            <Navigate to="/admin" replace />
           } />
           
           {/* Catch-all route */}
