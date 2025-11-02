@@ -649,6 +649,17 @@ const FeedbackForm = () => {
   if (showWelcome) {
     return (
       <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : ''}`}>
+        {/* Bubbly Background for Welcome Page */}
+        <div className="bubbly-bg">
+          <div className="bubble"></div>
+          <div className="bubble"></div>
+          <div className="bubble"></div>
+          <div className="bubble"></div>
+          <div className="bubble"></div>
+          <div className="bubble"></div>
+          <div className="bubble"></div>
+        </div>
+
         <div className={`welcome-container ${isTransitioning ? 'transitioning' : ''}`}>
           <div className="welcome-content">
             <div className={`welcome-logo ${welcomeStep >= 1 ? 'show' : ''}`}>
@@ -736,6 +747,17 @@ const FeedbackForm = () => {
 
   return (
     <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : ''}`}>
+      {/* Bubbly Background for Form */}
+      <div className="bubbly-bg">
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+      </div>
+      
       {/* Background Icons - Now visible throughout the app */}
       <div className="background-icons">
         {backgroundIcons.map((icon, index) => (
