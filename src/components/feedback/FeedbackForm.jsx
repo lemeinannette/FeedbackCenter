@@ -27,7 +27,7 @@ const FeedbackForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [activeSection, setActiveSection] = useState('personal');
   const [formProgress, setFormProgress] = useState(0);
   const [submitClicked, setSubmitClicked] = useState(false);
@@ -35,19 +35,122 @@ const FeedbackForm = () => {
   const [submissionId, setSubmissionId] = useState(null);
   const [focusedField, setFocusedField] = useState(null);
   const [hoveredRating, setHoveredRating] = useState({ name: null, value: 0 });
+  const [animateIn, setAnimateIn] = useState(false);
+  
+  // Welcome page state
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [welcomeStep, setWelcomeStep] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [currentFeature, setCurrentFeature] = useState(0);
+  
+  // Transition effects state
+  const [transitionDirection, setTransitionDirection] = useState('forward');
+  const [isSectionTransitioning, setIsSectionTransitioning] = useState(false);
+  const [particles, setParticles] = useState([]);
+  const [showParticles, setShowParticles] = useState(false);
+  
   const navigate = useNavigate();
   const location = useLocation();
   const formRef = useRef(null);
 
+  // Features for the welcome page
+  const features = [
+    {
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L13.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L10.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      title: "Rate Your Experience",
+      description: "Share your thoughts on food, ambience, service, and overall experience"
+    },
+    {
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 11.5C21 17.3 16.3 22 10.5 22C9.1 22 7.8 21.7 6.6 21.2L2 22L3.4 17.8C2.5 16.5 2 14.9 2 13.2C2 7.4 6.7 2.7 12.5 2.7C18.3 2.7 23 7.4 23 13.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      title: "Share Your Feedback",
+      description: "Provide detailed comments about your experience to help us improve"
+    },
+    {
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      title: "Make a Difference",
+      description: "Your feedback directly contributes to enhancing our services and experiences"
+    }
+  ];
+
+  // Background icons for the entire app
+  const backgroundIcons = [
+    { icon: 'star', top: '10%', left: '5%', size: '30px', delay: '0s' },
+    { icon: 'heart', top: '20%', right: '8%', size: '25px', delay: '0.5s' },
+    { icon: 'message', top: '70%', left: '7%', size: '28px', delay: '1s' },
+    { icon: 'thumbs-up', top: '80%', right: '10%', size: '32px', delay: '1.5s' },
+    { icon: 'chart', top: '40%', left: '3%', size: '26px', delay: '2s' },
+    { icon: 'users', top: '60%', right: '5%', size: '30px', delay: '2.5s' },
+    { icon: 'settings', top: '15%', left: '15%', size: '24px', delay: '3s' },
+    { icon: 'check', top: '85%', left: '20%', size: '28px', delay: '3.5s' },
+    { icon: 'calendar', top: '30%', right: '15%', size: '26px', delay: '4s' },
+    { icon: 'bell', top: '50%', left: '10%', size: '22px', delay: '4.5s' },
+  ];
+
+  // Generate particles for transition effects
+  const generateParticles = useCallback(() => {
+    const newParticles = [];
+    for (let i = 0; i < 30; i++) {
+      newParticles.push({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 5 + 2,
+        duration: Math.random() * 2 + 1
+      });
+    }
+    setParticles(newParticles);
+  }, []);
+
+  // Welcome page effect
+  useEffect(() => {
+    if (showWelcome) {
+      const timer1 = setTimeout(() => setWelcomeStep(1), 500);
+      const timer2 = setTimeout(() => setWelcomeStep(2), 1500);
+      const timer3 = setTimeout(() => setWelcomeStep(3), 2500);
+      const timer4 = setTimeout(() => setWelcomeStep(4), 3500);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+        clearTimeout(timer4);
+      };
+    }
+  }, [showWelcome]);
+
+  // Rotate through features on welcome page
+  useEffect(() => {
+    if (showWelcome && welcomeStep >= 4) {
+      const interval = setInterval(() => {
+        setCurrentFeature((prev) => (prev + 1) % features.length);
+      }, 4000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [showWelcome, welcomeStep, features.length]);
+
   // Load theme preference from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('feedbackFormTheme');
-    if (savedTheme === 'light') {
-      setIsDarkTheme(false);
-      document.body.classList.remove('dark-theme');
-    } else {
+    if (savedTheme === 'dark') {
       setIsDarkTheme(true);
       document.body.classList.add('dark-theme');
+    } else {
+      setIsDarkTheme(false);
+      document.body.classList.remove('dark-theme');
     }
     
     if (showThankYou) {
@@ -56,6 +159,9 @@ const FeedbackForm = () => {
       setSubmissionComplete(false);
       setSubmissionId(null);
     }
+    
+    // Trigger animation after component mounts
+    setTimeout(() => setAnimateIn(true), 100);
   }, []);
 
   // Calculate form progress with more sophisticated logic
@@ -146,7 +252,12 @@ const FeedbackForm = () => {
       ...prev,
       [name]: rating
     }));
-  }, []);
+    
+    // Add particle effect when rating is selected
+    generateParticles();
+    setShowParticles(true);
+    setTimeout(() => setShowParticles(false), 1000);
+  }, [generateParticles]);
 
   const handleRatingHover = useCallback((name, value) => {
     setHoveredRating({ name, value });
@@ -161,7 +272,12 @@ const FeedbackForm = () => {
       ...prev,
       wouldRecommend: value
     }));
-  }, []);
+    
+    // Add particle effect when recommendation is selected
+    generateParticles();
+    setShowParticles(true);
+    setTimeout(() => setShowParticles(false), 1000);
+  }, [generateParticles]);
 
   const validateForm = useCallback(() => {
     const newErrors = {};
@@ -246,6 +362,10 @@ const FeedbackForm = () => {
     
     setIsSubmitting(true);
     
+    // Generate particles for submission effect
+    generateParticles();
+    setShowParticles(true);
+    
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -301,6 +421,9 @@ const FeedbackForm = () => {
       
       window.dispatchEvent(new Event('feedbackUpdated'));
       
+      // Hide particles after submission
+      setTimeout(() => setShowParticles(false), 1000);
+      
       setShowThankYou(true);
       setSubmissionComplete(true);
     } catch (error) {
@@ -308,10 +431,11 @@ const FeedbackForm = () => {
       setErrors({ form: 'An error occurred while submitting your feedback. Please try again.' });
       setSubmitClicked(false);
       setSubmissionComplete(false);
+      setShowParticles(false);
     } finally {
       setIsSubmitting(false);
     }
-  }, [submitClicked, validateForm, formData]);
+  }, [submitClicked, validateForm, formData, generateParticles]);
 
   const handleResetForm = useCallback(() => {
     console.log('Resetting form');
@@ -339,6 +463,42 @@ const FeedbackForm = () => {
     setSubmissionId(null);
     setActiveSection('personal');
   }, []);
+
+  // Handle welcome page transition to form
+  const handleGetStarted = useCallback(() => {
+    setIsTransitioning(true);
+    generateParticles();
+    setShowParticles(true);
+    
+    setTimeout(() => {
+      setShowWelcome(false);
+      setIsTransitioning(false);
+      setTimeout(() => setShowParticles(false), 500);
+    }, 800);
+  }, [generateParticles]);
+
+  // Handle section navigation with transition
+  const handleSectionChange = useCallback((section) => {
+    if (section === activeSection || isSectionTransitioning) return;
+    
+    // Determine transition direction
+    const sections = ['personal', 'event', 'ratings', 'comments'];
+    const currentIndex = sections.indexOf(activeSection);
+    const newIndex = sections.indexOf(section);
+    setTransitionDirection(newIndex > currentIndex ? 'forward' : 'backward');
+    
+    setIsSectionTransitioning(true);
+    
+    // Generate particles for transition
+    generateParticles();
+    setShowParticles(true);
+    
+    setTimeout(() => {
+      setActiveSection(section);
+      setIsSectionTransitioning(false);
+      setTimeout(() => setShowParticles(false), 500);
+    }, 300);
+  }, [activeSection, isSectionTransitioning, generateParticles]);
 
   // Enhanced star rating component with responsive design and subtle animations
   const renderStars = useCallback((name, rating) => {
@@ -375,8 +535,8 @@ const FeedbackForm = () => {
                 >
                   <path 
                     d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" 
-                    fill={star <= displayRating ? "#FFD700" : "#D3D3D3"}
-                    stroke={star <= displayRating ? "#FFA500" : "#A9A9A9"}
+                    fill={star <= displayRating ? "#FF9E58" : "#E0E0E0"}
+                    stroke={star <= displayRating ? "#FF6B35" : "#BDBDBD"}
                     strokeWidth="1.5"
                   />
                 </svg>
@@ -388,6 +548,93 @@ const FeedbackForm = () => {
     );
   }, [handleRatingChange, handleRatingHover, handleRatingLeave, hoveredRating]);
 
+  // Render background icon
+  const renderBackgroundIcon = (iconType) => {
+    switch(iconType) {
+      case 'star':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L13.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L10.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'heart':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.84 4.61C20.3292 4.04974 19.7228 3.5889 19.0554 3.25454C18.3879 2.92018 17.6725 2.71871 16.94 2.6603C16.2075 2.6019 15.4714 2.68756 14.7774 2.91243C14.0834 3.1373 13.4471 3.49633 12.9 3.96999C12.3529 3.49633 11.7166 3.1373 11.0226 2.91243C10.3286 2.68756 9.59246 2.6019 8.85996 2.6603C8.12746 2.71871 7.41207 2.92018 6.74464 3.25454C6.07722 3.5889 5.47077 4.04974 4.96 4.61C3.82469 5.82531 3.4053 7.46487 3.80996 9.01999C4.21462 10.5751 5.40633 11.8109 6.93996 12.27L12 21L17.06 12.27C18.5936 11.8109 19.7853 10.5751 20.19 9.01999C20.5946 7.46487 20.1752 5.82531 19.04 4.61H20.84Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'message':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 11.5C21 17.3 16.3 22 10.5 22C9.1 22 7.8 21.7 6.6 21.2L2 22L3.4 17.8C2.5 16.5 2 14.9 2 13.2C2 7.4 6.7 2.7 12.5 2.7C18.3 2.7 23 7.4 23 13.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'thumbs-up':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 9V5C14 3.9 13.1 3 12 3H11.5C10.7 3 10 3.4 9.7 4L7 9H5C3.9 9 3 9.9 3 11V17C3 18.1 3.9 19 5 19H19C20.1 19 21 18.1 21 17V13C21 11.9 20.1 11 19 11H17L14.3 6.7C14 6.4 13.3 6 12.5 6H12V9H14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'chart':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 20V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6 20V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'users':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'settings':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+            <path d="M12 1V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 18V23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4.22 4.22L7.76 7.76" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M16.24 16.24L19.78 19.78" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M1 12H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M18 12H23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4.22 19.78L7.76 16.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M16.24 7.76L19.78 4.22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'check':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 11.08V12C22 16.9706 17.9706 21 13 21C8.02944 21 4 16.9706 4 12C4 7.02944 8.02944 3 13 3C17.9706 3 22 7.02944 22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'calendar':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
+            <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth="2"/>
+            <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth="2"/>
+            <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/>
+          </svg>
+        );
+      case 'bell':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 8A6 6 0 0 0 6 2C3 2 1 4 1 6C1 8 2 10 6 10V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6 11H18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M10 11V16C10 16.5523 10.4477 17.0523 10.8944 17.4472C11.3411 17.8421 11.8957 18 12.5 18C13.1043 18 13.6589 17.8421 14.1056 17.4472C14.5523 17.0523 15 16.5523 15 16V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   // Only show thank you message if submission is complete
   if (showThankYou === true && submissionComplete === true) {
     return (
@@ -398,11 +645,120 @@ const FeedbackForm = () => {
     );
   }
 
+  // Welcome page
+  if (showWelcome) {
+    return (
+      <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : ''}`}>
+        <div className={`welcome-container ${isTransitioning ? 'transitioning' : ''}`}>
+          <div className="welcome-content">
+            <div className={`welcome-logo ${welcomeStep >= 1 ? 'show' : ''}`}>
+              <div className="logo-circle">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L13.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L10.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            
+            <h1 className={`welcome-title ${welcomeStep >= 2 ? 'show' : ''}`}>Feedback Portal</h1>
+            
+            <p className={`welcome-subtitle ${welcomeStep >= 3 ? 'show' : ''}`}>
+              We value your opinion and would love to hear about your experience. Your feedback helps us improve our services.
+            </p>
+            
+            <div className={`welcome-features ${welcomeStep >= 4 ? 'show' : ''}`}>
+              {features.map((feature, index) => (
+                <div 
+                  key={index} 
+                  className={`feature-card ${currentFeature === index ? 'active' : ''}`}
+                >
+                  <div className="feature-icon">
+                    {feature.icon}
+                  </div>
+                  <h3 className="feature-title">{feature.title}</h3>
+                  <p className="feature-description">{feature.description}</p>
+                </div>
+              ))}
+            </div>
+            
+            <div className="feature-indicators">
+              {features.map((_, index) => (
+                <button
+                  key={index}
+                  className={`indicator ${currentFeature === index ? 'active' : ''}`}
+                  onClick={() => setCurrentFeature(index)}
+                  aria-label={`View feature ${index + 1}`}
+                />
+              ))}
+            </div>
+            
+            <button 
+              className={`welcome-button ${welcomeStep >= 4 ? 'show' : ''}`}
+              onClick={handleGetStarted}
+            >
+              Get Started
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          
+          <div className="welcome-decoration">
+            <div className="decoration-circle decoration-1"></div>
+            <div className="decoration-circle decoration-2"></div>
+            <div className="decoration-circle decoration-3"></div>
+            <div className="decoration-circle decoration-4"></div>
+            <div className="decoration-circle decoration-5"></div>
+          </div>
+          
+          {/* Particle Effect Container */}
+          {showParticles && (
+            <div className="particles-container">
+              {particles.map(particle => (
+                <div
+                  key={particle.id}
+                  className="particle"
+                  style={{
+                    left: `${particle.x}%`,
+                    top: `${particle.y}%`,
+                    width: `${particle.size}px`,
+                    height: `${particle.size}px`,
+                    animationDuration: `${particle.duration}s`
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`feedback-app ${isDarkTheme ? 'dark-theme' : ''}`}>
+      {/* Background Icons - Now visible throughout the app */}
+      <div className="background-icons">
+        {backgroundIcons.map((icon, index) => (
+          <div
+            key={index}
+            className="background-icon"
+            style={{
+              top: icon.top,
+              left: icon.left,
+              right: icon.right,
+              width: icon.size,
+              height: icon.size,
+              animationDelay: icon.delay
+            }}
+          >
+            {renderBackgroundIcon(icon.icon)}
+          </div>
+        ))}
+      </div>
+      
       <Header />
       
-      <div className={`feedback-form-container ${isDarkTheme ? 'dark-theme' : ''}`}>
+      <div className={`feedback-form-container ${isDarkTheme ? 'dark-theme' : ''} ${animateIn ? 'animate-in' : ''}`}>
         <div className="feedback-form-wrapper">
           <div className="feedback-form-header">
             <div className="header-content">
@@ -447,7 +803,7 @@ const FeedbackForm = () => {
               <button 
                 type="button" 
                 className={`nav-item ${activeSection === 'personal' ? 'active' : ''}`}
-                onClick={() => setActiveSection('personal')}
+                onClick={() => handleSectionChange('personal')}
                 aria-label="Personal Information"
               >
                 <div className="nav-icon">
@@ -462,7 +818,7 @@ const FeedbackForm = () => {
               <button 
                 type="button" 
                 className={`nav-item ${activeSection === 'event' ? 'active' : ''}`}
-                onClick={() => setActiveSection('event')}
+                onClick={() => handleSectionChange('event')}
                 aria-label="Event Details"
               >
                 <div className="nav-icon">
@@ -479,7 +835,7 @@ const FeedbackForm = () => {
               <button 
                 type="button" 
                 className={`nav-item ${activeSection === 'ratings' ? 'active' : ''}`}
-                onClick={() => setActiveSection('ratings')}
+                onClick={() => handleSectionChange('ratings')}
                 aria-label="Ratings"
               >
                 <div className="nav-icon">
@@ -493,7 +849,7 @@ const FeedbackForm = () => {
               <button 
                 type="button" 
                 className={`nav-item ${activeSection === 'comments' ? 'active' : ''}`}
-                onClick={() => setActiveSection('comments')}
+                onClick={() => handleSectionChange('comments')}
                 aria-label="Comments"
               >
                 <div className="nav-icon">
@@ -506,7 +862,7 @@ const FeedbackForm = () => {
             </div>
             
             {/* Personal Information Section */}
-            <div className={`form-section ${activeSection === 'personal' ? 'active' : ''}`}>
+            <div className={`form-section ${activeSection === 'personal' ? 'active' : ''} ${isSectionTransitioning ? 'transitioning' : ''} ${transitionDirection}`}>
               <div className="section-header">
                 <h2>Personal Information</h2>
                 <p>Tell us about yourself</p>
@@ -738,7 +1094,7 @@ const FeedbackForm = () => {
             </div>
             
             {/* Event Information Section */}
-            <div className={`form-section ${activeSection === 'event' ? 'active' : ''}`}>
+            <div className={`form-section ${activeSection === 'event' ? 'active' : ''} ${isSectionTransitioning ? 'transitioning' : ''} ${transitionDirection}`}>
               <div className="section-header">
                 <h2>Event Details</h2>
                 <p>Tell us about the event you attended</p>
@@ -810,7 +1166,7 @@ const FeedbackForm = () => {
             </div>
             
             {/* Ratings Section */}
-            <div className={`form-section ${activeSection === 'ratings' ? 'active' : ''}`}>
+            <div className={`form-section ${activeSection === 'ratings' ? 'active' : ''} ${isSectionTransitioning ? 'transitioning' : ''} ${transitionDirection}`}>
               <div className="section-header">
                 <h2>Your Ratings</h2>
                 <p>Rate your experience with us</p>
@@ -866,7 +1222,7 @@ const FeedbackForm = () => {
             </div>
             
             {/* Comments Section */}
-            <div className={`form-section ${activeSection === 'comments' ? 'active' : ''}`}>
+            <div className={`form-section ${activeSection === 'comments' ? 'active' : ''} ${isSectionTransitioning ? 'transitioning' : ''} ${transitionDirection}`}>
               <div className="section-header">
                 <h2>Additional Comments</h2>
                 <p>Share any additional thoughts or suggestions</p>
@@ -901,9 +1257,9 @@ const FeedbackForm = () => {
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => {
-                    if (activeSection === 'event') setActiveSection('personal');
-                    else if (activeSection === 'ratings') setActiveSection('event');
-                    else if (activeSection === 'comments') setActiveSection('ratings');
+                    if (activeSection === 'event') handleSectionChange('personal');
+                    else if (activeSection === 'ratings') handleSectionChange('event');
+                    else if (activeSection === 'comments') handleSectionChange('ratings');
                   }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -919,9 +1275,9 @@ const FeedbackForm = () => {
                   type="button"
                   className="btn btn-primary"
                   onClick={() => {
-                    if (activeSection === 'personal') setActiveSection('event');
-                    else if (activeSection === 'event') setActiveSection('ratings');
-                    else if (activeSection === 'ratings') setActiveSection('comments');
+                    if (activeSection === 'personal') handleSectionChange('event');
+                    else if (activeSection === 'event') handleSectionChange('ratings');
+                    else if (activeSection === 'ratings') handleSectionChange('comments');
                   }}
                 >
                   Next
@@ -960,6 +1316,25 @@ const FeedbackForm = () => {
           </div>
         </div>
       </div>
+      
+      {/* Particle Effect Container */}
+      {showParticles && (
+        <div className="particles-container">
+          {particles.map(particle => (
+            <div
+              key={particle.id}
+              className="particle"
+              style={{
+                left: `${particle.x}%`,
+                top: `${particle.y}%`,
+                width: `${particle.size}px`,
+                height: `${particle.size}px`,
+                animationDuration: `${particle.duration}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
