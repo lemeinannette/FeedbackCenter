@@ -500,7 +500,7 @@ const FeedbackForm = () => {
     }, 300);
   }, [activeSection, isSectionTransitioning, generateParticles]);
 
-  // Enhanced star rating component with responsive design and subtle animations
+  // Enhanced star rating component with gold color
   const renderStars = useCallback((name, rating) => {
     const labelName = name === 'foodRating' ? 'Food' : 
                      name === 'ambienceRating' ? 'Ambience' : 
@@ -535,8 +535,8 @@ const FeedbackForm = () => {
                 >
                   <path 
                     d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" 
-                    fill={star <= displayRating ? "#FF9E58" : "#E0E0E0"}
-                    stroke={star <= displayRating ? "#FF6B35" : "#BDBDBD"}
+                    fill={star <= displayRating ? "#FFD700" : "#E0E0E0"} /* Updated to gold color */
+                    stroke={star <= displayRating ? "#FFA500" : "#BDBDBD"} /* Updated to gold border */
                     strokeWidth="1.5"
                   />
                 </svg>
@@ -658,6 +658,9 @@ const FeedbackForm = () => {
           <div className="bubble"></div>
           <div className="bubble"></div>
           <div className="bubble"></div>
+          <div className="bubble"></div>
+          <div className="bubble"></div>
+          <div className="bubble"></div>
         </div>
 
         <div className={`welcome-container ${isTransitioning ? 'transitioning' : ''}`}>
@@ -756,6 +759,9 @@ const FeedbackForm = () => {
         <div className="bubble"></div>
         <div className="bubble"></div>
         <div className="bubble"></div>
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <div className="bubble"></div>
       </div>
       
       {/* Background Icons - Now visible throughout the app */}
@@ -789,7 +795,7 @@ const FeedbackForm = () => {
                 <p className="form-subtitle">We value your feedback and strive to improve our services</p>
               </div>
               
-              {/* === UPDATED THEME TOGGLE === */}
+              {/* Theme Toggle */}
               <button 
                 className={`theme-toggle ${isDarkTheme ? 'dark' : 'light'}`}
                 onClick={toggleTheme}
@@ -818,7 +824,6 @@ const FeedbackForm = () => {
             </div>
           )}
           
-          {/* Removed onSubmit from form element to prevent automatic submission */}
           <div ref={formRef} className="feedback-form">
             {/* Form Navigation */}
             <div className="form-navigation">
